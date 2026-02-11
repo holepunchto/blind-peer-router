@@ -27,7 +27,7 @@ function build() {
   });
 
   ns.register({
-    name: "get-peers-request",
+    name: "resolve-peers-request",
     fields: [
       {
         name: "key",
@@ -38,7 +38,7 @@ function build() {
   });
 
   ns.register({
-    name: "get-peers-response",
+    name: "resolve-peers-response",
     fields: [
       {
         name: "peers",

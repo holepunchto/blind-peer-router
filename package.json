@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "prettier --check .",
     "format": "prettier --write .",
-    "test": "npm run lint && brittle test/test.js"
+    "test": "npm run lint && brittle test/test.js",
+    "bench:flush": "node bench/flush-benchmark.js"
   },
   "bin": {
     "blind-peer-router": "bin.js"
@@ -26,7 +27,6 @@
   "author": "Holepunch",
   "license": "Apache-2.0",
   "dependencies": {
-    "blind-peering": "^1.15.0",
     "compact-encoding": "^2.16.0",
     "corestore": "^7.7.0",
     "graceful-goodbye": "^1.3.3",
@@ -38,11 +38,11 @@
     "pino": "^10.1.0",
     "protomux-rpc-middleware": "^1.0.0",
     "protomux-rpc-router": "^1.0.0",
-    "ready-resource": "^1.1.2"
+    "ready-resource": "^1.1.2",
+    "xor-distance": "^2.0.0"
   },
   "devDependencies": {
     "b4a": "^1.6.7",
-    "blind-peer": "^3.0.0",
     "brittle": "^3.7.0",
     "hyperdht": "^6.20.1",
     "lunte": "^1.6.0",

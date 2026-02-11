@@ -23,7 +23,7 @@
       ]
     },
     {
-      "name": "get-peers-request",
+      "name": "resolve-peers-request",
       "namespace": "blind-peer-router",
       "compact": false,
       "flagsPosition": -1,
@@ -37,7 +37,7 @@
       ]
     },
     {
-      "name": "get-peers-response",
+      "name": "resolve-peers-response",
       "namespace": "blind-peer-router",
       "compact": false,
       "flagsPosition": -1,

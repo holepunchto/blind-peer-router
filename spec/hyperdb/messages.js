@@ -35,7 +35,7 @@ const encoding0 = {
   },
 };
 
-// @blind-peer-router/get-peers-request
+// @blind-peer-router/resolve-peers-request
 const encoding1 = {
   preencode(state, m) {
     c.fixed32.preencode(state, m.key);
@@ -52,10 +52,10 @@ const encoding1 = {
   },
 };
 
-// @blind-peer-router/get-peers-response.peers
+// @blind-peer-router/resolve-peers-response.peers
 const encoding2_0 = encoding0_1;
 
-// @blind-peer-router/get-peers-response
+// @blind-peer-router/resolve-peers-response
 const encoding2 = {
   preencode(state, m) {
     encoding2_0.preencode(state, m.peers);
@@ -118,9 +118,9 @@ function getEncoding(name) {
   switch (name) {
     case "@blind-peer-router/assignment":
       return encoding0;
-    case "@blind-peer-router/get-peers-request":
+    case "@blind-peer-router/resolve-peers-request":
       return encoding1;
-    case "@blind-peer-router/get-peers-response":
+    case "@blind-peer-router/resolve-peers-response":
       return encoding2;
     case "@blind-peer-router/assignment/hyperdb#0":
       return encoding3;
