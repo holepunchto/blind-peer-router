@@ -1,3 +1,5 @@
+![CI](https://github.com/holepunchto/blind-peer-router/actions/workflows/ci.yml/badge.svg)
+
 # blind-peer-router
 
 > **POC** — This is a proof-of-concept. Blind peers must be provided as a fixed set at startup. Dynamic peer discovery and registration are not yet implemented.
