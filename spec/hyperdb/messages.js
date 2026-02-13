@@ -4,150 +4,150 @@
 /* eslint-disable quotes */
 /* eslint-disable space-before-function-paren */
 
-const { c } = require("hyperschema/runtime");
+const { c } = require('hyperschema/runtime')
 
-const VERSION = 1;
+const VERSION = 1
 
 // eslint-disable-next-line no-unused-vars
-let version = VERSION;
+let version = VERSION
 
 // @blind-peer-router/assignment.peers
-const encoding0_1 = c.array(c.fixed32);
+const encoding0_1 = c.array(c.fixed32)
 
 // @blind-peer-router/assignment
 const encoding0 = {
   preencode(state, m) {
-    c.fixed32.preencode(state, m.key);
-    encoding0_1.preencode(state, m.peers);
+    c.fixed32.preencode(state, m.key)
+    encoding0_1.preencode(state, m.peers)
   },
   encode(state, m) {
-    c.fixed32.encode(state, m.key);
-    encoding0_1.encode(state, m.peers);
+    c.fixed32.encode(state, m.key)
+    encoding0_1.encode(state, m.peers)
   },
   decode(state) {
-    const r0 = c.fixed32.decode(state);
-    const r1 = encoding0_1.decode(state);
+    const r0 = c.fixed32.decode(state)
+    const r1 = encoding0_1.decode(state)
 
     return {
       key: r0,
-      peers: r1,
-    };
-  },
-};
+      peers: r1
+    }
+  }
+}
 
 // @blind-peer-router/resolve-peers-request
 const encoding1 = {
   preencode(state, m) {
-    c.fixed32.preencode(state, m.key);
+    c.fixed32.preencode(state, m.key)
   },
   encode(state, m) {
-    c.fixed32.encode(state, m.key);
+    c.fixed32.encode(state, m.key)
   },
   decode(state) {
-    const r0 = c.fixed32.decode(state);
+    const r0 = c.fixed32.decode(state)
 
     return {
-      key: r0,
-    };
-  },
-};
+      key: r0
+    }
+  }
+}
 
 // @blind-peer-router/resolve-peers-response.peers
-const encoding2_0 = encoding0_1;
+const encoding2_0 = encoding0_1
 
 // @blind-peer-router/resolve-peers-response
 const encoding2 = {
   preencode(state, m) {
-    encoding2_0.preencode(state, m.peers);
+    encoding2_0.preencode(state, m.peers)
   },
   encode(state, m) {
-    encoding2_0.encode(state, m.peers);
+    encoding2_0.encode(state, m.peers)
   },
   decode(state) {
-    const r0 = encoding2_0.decode(state);
+    const r0 = encoding2_0.decode(state)
 
     return {
-      peers: r0,
-    };
-  },
-};
+      peers: r0
+    }
+  }
+}
 
 // @blind-peer-router/assignment/hyperdb#0.peers
-const encoding3_1 = encoding0_1;
+const encoding3_1 = encoding0_1
 
 // @blind-peer-router/assignment/hyperdb#0
 const encoding3 = {
   preencode(state, m) {
-    encoding3_1.preencode(state, m.peers);
+    encoding3_1.preencode(state, m.peers)
   },
   encode(state, m) {
-    encoding3_1.encode(state, m.peers);
+    encoding3_1.encode(state, m.peers)
   },
   decode(state) {
-    const r1 = encoding3_1.decode(state);
+    const r1 = encoding3_1.decode(state)
 
     return {
       key: null,
-      peers: r1,
-    };
-  },
-};
+      peers: r1
+    }
+  }
+}
 
 function setVersion(v) {
-  version = v;
+  version = v
 }
 
 function encode(name, value, v = VERSION) {
-  version = v;
-  return c.encode(getEncoding(name), value);
+  version = v
+  return c.encode(getEncoding(name), value)
 }
 
 function decode(name, buffer, v = VERSION) {
-  version = v;
-  return c.decode(getEncoding(name), buffer);
+  version = v
+  return c.decode(getEncoding(name), buffer)
 }
 
 function getEnum(name) {
   switch (name) {
     default:
-      throw new Error("Enum not found " + name);
+      throw new Error('Enum not found ' + name)
   }
 }
 
 function getEncoding(name) {
   switch (name) {
-    case "@blind-peer-router/assignment":
-      return encoding0;
-    case "@blind-peer-router/resolve-peers-request":
-      return encoding1;
-    case "@blind-peer-router/resolve-peers-response":
-      return encoding2;
-    case "@blind-peer-router/assignment/hyperdb#0":
-      return encoding3;
+    case '@blind-peer-router/assignment':
+      return encoding0
+    case '@blind-peer-router/resolve-peers-request':
+      return encoding1
+    case '@blind-peer-router/resolve-peers-response':
+      return encoding2
+    case '@blind-peer-router/assignment/hyperdb#0':
+      return encoding3
     default:
-      throw new Error("Encoder not found " + name);
+      throw new Error('Encoder not found ' + name)
   }
 }
 
 function getStruct(name, v = VERSION) {
-  const enc = getEncoding(name);
+  const enc = getEncoding(name)
   return {
     preencode(state, m) {
-      version = v;
-      enc.preencode(state, m);
+      version = v
+      enc.preencode(state, m)
     },
     encode(state, m) {
-      version = v;
-      enc.encode(state, m);
+      version = v
+      enc.encode(state, m)
     },
     decode(state) {
-      version = v;
-      return enc.decode(state);
-    },
-  };
+      version = v
+      return enc.decode(state)
+    }
+  }
 }
 
-const resolveStruct = getStruct; // compat
+const resolveStruct = getStruct // compat
 
 module.exports = {
   resolveStruct,
@@ -157,5 +157,5 @@ module.exports = {
   encode,
   decode,
   setVersion,
-  version,
-};
+  version
+}
