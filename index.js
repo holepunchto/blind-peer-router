@@ -1,15 +1,11 @@
-const ReadyResource = require("ready-resource");
-const HyperDB = require("hyperdb");
-const xorDistance = require("xor-distance");
+const ReadyResource = require('ready-resource')
+const HyperDB = require('hyperdb')
+const xorDistance = require('xor-distance')
 
-const spec = require("./spec/hyperdb");
-const { resolveStruct } = require("./spec/hyperschema");
-const ResolvePeersRequest = resolveStruct(
-  "@blind-peer-router/resolve-peers-request",
-);
-const ResolvePeersResponse = resolveStruct(
-  "@blind-peer-router/resolve-peers-response",
-);
+const spec = require('./spec/hyperdb')
+const { resolveStruct } = require('./spec/hyperschema')
+const ResolvePeersRequest = resolveStruct('@blind-peer-router/resolve-peers-request')
+const ResolvePeersResponse = resolveStruct('@blind-peer-router/resolve-peers-response')
 
 class BlindPeerRouter extends ReadyResource {
   /**
@@ -26,107 +22,98 @@ class BlindPeerRouter extends ReadyResource {
     store,
     swarm,
     router,
-    {
-      blindPeerKeys,
-      replicaCount = 1,
-      autoFlush = false,
-      flushInterval = 1_000,
-    } = {},
+    { blindPeerKeys, replicaCount = 1, autoFlush = false, flushInterval = 1_000 } = {}
   ) {
-    super();
+    super()
 
-    this.store = store;
-    this.swarm = swarm;
-    this.router = router;
-    this.blindPeerKeys = blindPeerKeys;
-    this.replicaCount = Math.min(replicaCount, blindPeerKeys.length);
-    this.autoFlush = autoFlush;
-    this.flushInterval = flushInterval;
+    this.store = store
+    this.swarm = swarm
+    this.router = router
+    this.blindPeerKeys = blindPeerKeys
+    this.replicaCount = Math.min(replicaCount, blindPeerKeys.length)
+    this.autoFlush = autoFlush
+    this.flushInterval = flushInterval
 
-    this.db = HyperDB.bee2(this.store, spec);
-    this._flushTimer = null;
-    this._pendingFlush = false;
+    this.db = HyperDB.bee2(this.store, spec)
+    this._flushTimer = null
+    this._pendingFlush = false
 
     this.router.method(
-      "resolve-peers",
+      'resolve-peers',
       {
         requestEncoding: ResolvePeersRequest,
-        responseEncoding: ResolvePeersResponse,
+        responseEncoding: ResolvePeersResponse
       },
-      this._onResolvePeers.bind(this),
-    );
+      this._onResolvePeers.bind(this)
+    )
   }
 
   /** @returns {Buffer} swarm public key for client discovery */
   get publicKey() {
-    return this.swarm.keyPair.publicKey;
+    return this.swarm.keyPair.publicKey
   }
 
   /** Opens db, router, and joins the swarm. */
   async _open() {
-    await this.store.ready();
-    await this.db.ready();
-    await this.router.ready();
+    await this.store.ready()
+    await this.db.ready()
+    await this.router.ready()
 
     if (!this.autoFlush) {
       this._flushTimer = setInterval(() => {
-        if (!this._pendingFlush) return;
-        this._pendingFlush = false;
-        this.db.flush().catch(noop);
-      }, this.flushInterval);
-      this._flushTimer.unref();
+        if (!this._pendingFlush) return
+        this._pendingFlush = false
+        this.db.flush().catch(noop)
+      }, this.flushInterval)
+      this._flushTimer.unref()
     }
 
-    this.swarm.on("connection", (conn) => {
-      this.store.replicate(conn);
-      this.router.handleConnection(conn, this.swarm.keyPair.publicKey);
-    });
+    this.swarm.on('connection', (conn) => {
+      this.store.replicate(conn)
+      this.router.handleConnection(conn, this.swarm.keyPair.publicKey)
+    })
 
-    await this.swarm.listen();
-    this.swarm.join(this.db.core.discoveryKey);
+    await this.swarm.listen()
+    this.swarm.join(this.db.core.discoveryKey)
   }
 
   /** Closes router and db. Caller owns swarm/store teardown. */
   async _close() {
     if (this._flushTimer !== null) {
-      clearInterval(this._flushTimer);
-      this._flushTimer = null;
+      clearInterval(this._flushTimer)
+      this._flushTimer = null
     }
 
-    await this.router.close();
+    await this.router.close()
     if (this._pendingFlush) {
-      this._pendingFlush = false;
-      await this.db.flush();
+      this._pendingFlush = false
+      await this.db.flush()
     }
-    await this.db.close();
+    await this.db.close()
   }
 
   /** RPC handler: returns existing peers or resolves closest peers for key. */
   async _onResolvePeers(req) {
-    const key = req.key;
+    const key = req.key
 
-    const existing = await this.db.get("@blind-peer-router/assignment", {
-      key,
-    });
+    const existing = await this.db.get('@blind-peer-router/assignment', {
+      key
+    })
     if (existing) {
-      return { peers: existing.peers };
+      return { peers: existing.peers }
     }
 
-    const peers = getClosestMirrorList(
-      key,
-      this.blindPeerKeys,
-      this.replicaCount,
-    );
+    const peers = getClosestMirrorList(key, this.blindPeerKeys, this.replicaCount)
 
-    await this.db.insert("@blind-peer-router/assignment", { key, peers });
+    await this.db.insert('@blind-peer-router/assignment', { key, peers })
 
     if (this.autoFlush) {
-      await this.db.flush();
+      await this.db.flush()
     } else {
-      this._pendingFlush = true;
+      this._pendingFlush = true
     }
 
-    return { peers };
+    return { peers }
   }
 }
 
@@ -137,25 +124,25 @@ class BlindPeerRouter extends ReadyResource {
  * @returns {Buffer[]}
  */
 function getClosestMirrorList(key, list, n) {
-  if (!list || !list.length) return [];
+  if (!list || !list.length) return []
 
-  if (n > list.length) n = list.length;
+  if (n > list.length) n = list.length
 
   for (let i = 0; i < n; i++) {
-    let current = null;
+    let current = null
     for (let j = i; j < list.length; j++) {
-      const next = xorDistance(list[j], key);
-      if (current && xorDistance.gt(next, current)) continue;
-      const tmp = list[i];
-      list[i] = list[j];
-      list[j] = tmp;
-      current = next;
+      const next = xorDistance(list[j], key)
+      if (current && xorDistance.gt(next, current)) continue
+      const tmp = list[i]
+      list[i] = list[j]
+      list[j] = tmp
+      current = next
     }
   }
 
-  return list.slice(0, n);
+  return list.slice(0, n)
 }
 
 function noop() {}
 
-module.exports = BlindPeerRouter;
+module.exports = BlindPeerRouter

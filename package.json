@@ -4,8 +4,8 @@
   "description": "Single-writer RPC service mapping content keys to blind peer assignments",
   "main": "index.js",
   "scripts": {
-    "lint": "prettier --check .",
-    "format": "prettier --write .",
+    "lint": "prettier --check . && lunte",
+    "format": "prettier --write . && lunte --fix",
     "test": "npm run lint && brittle test/test.js",
     "bench:flush": "node bench/flush-benchmark.js"
   },
