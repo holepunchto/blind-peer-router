@@ -61,13 +61,7 @@ const collections = [collection0]
 
 const indexes = []
 
-module.exports = {
-  version,
-  collections,
-  indexes,
-  resolveCollection,
-  resolveIndex
-}
+module.exports = { version, collections, indexes, resolveCollection, resolveIndex }
 
 function resolveCollection(name) {
   switch (name) {

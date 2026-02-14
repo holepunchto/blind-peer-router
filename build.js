@@ -1,13 +1,27 @@
-const path = require('path')
 const HyperDB = require('hyperdb/builder')
 const Hyperschema = require('hyperschema')
 
-const SCHEMA_DIR = path.join(__dirname, 'spec', 'hyperschema')
-const DB_DIR = path.join(__dirname, 'spec', 'hyperdb')
+const SCHEMA_DIR = './spec/hyperschema'
+const DB_DIR = './spec/hyperdb'
 
 function build() {
-  const schema = Hyperschema.from(SCHEMA_DIR, { versioned: false })
+  const schema = Hyperschema.from(SCHEMA_DIR)
   const ns = schema.namespace('blind-peer-router')
+
+  ns.register({
+    name: 'peer',
+    fields: [
+      {
+        name: 'key',
+        type: 'fixed32',
+        required: true
+      },
+      {
+        name: 'location',
+        type: 'string'
+      }
+    ]
+  })
 
   ns.register({
     name: 'assignment',
@@ -19,7 +33,7 @@ function build() {
       },
       {
         name: 'peers',
-        type: 'fixed32',
+        type: '@blind-peer-router/peer',
         required: true,
         array: true
       }
@@ -42,7 +56,7 @@ function build() {
     fields: [
       {
         name: 'peers',
-        type: 'fixed32',
+        type: '@blind-peer-router/peer',
         required: true,
         array: true
       }

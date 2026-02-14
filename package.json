@@ -8,6 +8,7 @@
     "format": "prettier --write . && lunte --fix",
     "test": "brittle test/test.js",
     "test-bare": "brittle-bare test/test.js",
+    "build": "node build.js",
     "bench:flush": "node bench/flush-benchmark.js"
   },
   "bin": {
