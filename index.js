@@ -13,7 +13,10 @@ class BlindPeerRouter extends ReadyResource {
    * @param {import('hyperswarm')} swarm
    * @param {import('protomux-rpc-router')} router
    * @param {object} opts
-   * @param {Buffer[]} opts.blindPeerKeys - blind peer public keys
+   * @param {{
+   *   key: Buffer,
+   *   location?: string
+   * }[]} opts.blindPeers - blind peers
    * @param {number} [opts.replicaCount=1] - peers to assign per key
    * @param {boolean} [opts.autoFlush=false] - flush immediately on each insert
    * @param {number} [opts.flushInterval=1000] - flush interval in ms (when autoFlush is false)
@@ -22,15 +25,15 @@ class BlindPeerRouter extends ReadyResource {
     store,
     swarm,
     router,
-    { blindPeerKeys, replicaCount = 1, autoFlush = false, flushInterval = 1_000 } = {}
+    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1_000 } = {}
   ) {
     super()
 
     this.store = store
     this.swarm = swarm
     this.router = router
-    this.blindPeerKeys = blindPeerKeys
-    this.replicaCount = Math.min(replicaCount, blindPeerKeys.length)
+    this.blindPeers = blindPeers
+    this.replicaCount = Math.min(replicaCount, blindPeers.length)
     this.autoFlush = autoFlush
     this.flushInterval = flushInterval
 
@@ -103,8 +106,9 @@ class BlindPeerRouter extends ReadyResource {
       return { peers: existing.peers }
     }
 
-    const peerKeys = getClosestMirrorList(key, this.blindPeerKeys, this.replicaCount)
-    const peers = peerKeys.map((key) => ({ key }))
+    const blindPeerKeys = this.blindPeers.map((p) => p.key)
+    const peerKeys = getClosestMirrorList(key, blindPeerKeys, this.replicaCount)
+    const peers = this.blindPeers.filter((p) => peerKeys.includes(p.key))
 
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 

@@ -20,7 +20,7 @@ async function setupTestnet(t) {
   return testnet
 }
 
-async function setupRoutingService(t, bootstrap, blindPeerKeys, { replicaCount = 2 } = {}) {
+async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2 } = {}) {
   const storage = await tmpDir(t)
 
   const store = new Corestore(storage)
@@ -36,7 +36,7 @@ async function setupRoutingService(t, bootstrap, blindPeerKeys, { replicaCount =
   t.teardown(() => router.close())
 
   const service = new BlindPeerRouter(store, swarm, router, {
-    blindPeerKeys,
+    blindPeers,
     replicaCount
   })
   t.teardown(() => service.close())
@@ -85,8 +85,9 @@ async function resolvePeers(rpc, key) {
 test('resolve-peers assigns blind peers for a new key', async (t) => {
   const { bootstrap } = await setupTestnet(t)
   const blindPeerKeys = createBlindPeerKeys(5)
+  const blindPeers = blindPeerKeys.map((key, i) => ({ key, location: `loc-${i}` }))
 
-  const service = await setupRoutingService(t, bootstrap, blindPeerKeys)
+  const service = await setupRoutingService(t, bootstrap, blindPeers)
   const rpc = await setupClient(t, bootstrap, service.publicKey)
 
   const key = b4a.alloc(32, 0xaa)
@@ -94,16 +95,20 @@ test('resolve-peers assigns blind peers for a new key', async (t) => {
 
   t.is(res.peers.length, 2, 'assigns replicaCount peers')
   t.ok(
-    res.peers.every((p) => blindPeerKeys.some((peerKey) => b4a.equals(p.key, peerKey))),
+    res.peers.every((p) => blindPeers.some((peer) => b4a.equals(p.key, peer.key))),
     'assigned peers are from the configured blind peer list'
+  )
+  t.ok(
+    res.peers.every((p) => blindPeers.find((peer) => b4a.equals(p.key, peer.key) && peer.location)),
+    'assigned peers include location info'
   )
 })
 
 test('resolve-peers returns same peers on second call', async (t) => {
   const { bootstrap } = await setupTestnet(t)
   const blindPeerKeys = createBlindPeerKeys(5)
-
-  const service = await setupRoutingService(t, bootstrap, blindPeerKeys)
+  const blindPeers = blindPeerKeys.map((key, i) => ({ key, location: `loc-${i}` }))
+  const service = await setupRoutingService(t, bootstrap, blindPeers)
   const rpc = await setupClient(t, bootstrap, service.publicKey)
 
   const key = b4a.alloc(32, 0xbb)
@@ -111,13 +116,19 @@ test('resolve-peers returns same peers on second call', async (t) => {
   const res2 = await resolvePeers(rpc, key)
 
   t.alike(sortPeerKeys(res1.peers), sortPeerKeys(res2.peers), 'same peers returned for same key')
+  t.ok(
+    res1.peers.every((p) =>
+      blindPeers.some((peer) => b4a.equals(p.key, peer.key) && peer.location)
+    ),
+    'same peers returned for same key with location info'
+  )
 })
 
 test('replicaCount is capped to number of blind peers', async (t) => {
   const { bootstrap } = await setupTestnet(t)
   const blindPeerKeys = [b4a.alloc(32, 0xab)]
-
-  const service = await setupRoutingService(t, bootstrap, blindPeerKeys, {
+  const blindPeers = blindPeerKeys.map((key, i) => ({ key, location: `loc-${i}` }))
+  const service = await setupRoutingService(t, bootstrap, blindPeers, {
     replicaCount: 5
   })
   const rpc = await setupClient(t, bootstrap, service.publicKey)
