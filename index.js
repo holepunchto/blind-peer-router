@@ -9,9 +9,9 @@ const ResolvePeersResponse = resolveStruct('@blind-peer-router/resolve-peers-res
 
 class BlindPeerRouter extends ReadyResource {
   /**
-   * @param {Corestore} store
-   * @param {Hyperswarm} swarm
-   * @param {ProtomuxRPCRouter} router
+   * @param {import('corestore')} store
+   * @param {import('hyperswarm')} swarm
+   * @param {import('protomux-rpc-router')} router
    * @param {object} opts
    * @param {Buffer[]} opts.blindPeerKeys - blind peer public keys
    * @param {number} [opts.replicaCount=1] - peers to assign per key
