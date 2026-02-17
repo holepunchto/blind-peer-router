@@ -103,7 +103,8 @@ class BlindPeerRouter extends ReadyResource {
       return { peers: existing.peers }
     }
 
-    const peers = getClosestMirrorList(key, this.blindPeerKeys, this.replicaCount)
+    const peerKeys = getClosestMirrorList(key, this.blindPeerKeys, this.replicaCount)
+    const peers = peerKeys.map((key) => ({ key }))
 
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 

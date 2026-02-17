@@ -68,7 +68,7 @@ function createBlindPeerKeys(count) {
 }
 
 function sortPeerKeys(peers) {
-  return peers.map((p) => IdEnc.encode(p)).sort()
+  return peers.map((p) => IdEnc.encode(p.key)).sort()
 }
 
 async function resolvePeers(rpc, key) {
@@ -94,7 +94,7 @@ test('resolve-peers assigns blind peers for a new key', async (t) => {
 
   t.is(res.peers.length, 2, 'assigns replicaCount peers')
   t.ok(
-    res.peers.every((p) => blindPeerKeys.some((peerKey) => b4a.equals(p, peerKey))),
+    res.peers.every((p) => blindPeerKeys.some((peerKey) => b4a.equals(p.key, peerKey))),
     'assigned peers are from the configured blind peer list'
   )
 })

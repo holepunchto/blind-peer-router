@@ -11,22 +11,49 @@ const VERSION = 1
 // eslint-disable-next-line no-unused-vars
 let version = VERSION
 
-// @blind-peer-router/assignment.peers
-const encoding0_1 = c.array(c.fixed32)
-
-// @blind-peer-router/assignment
+// @blind-peer-router/peer
 const encoding0 = {
   preencode(state, m) {
     c.fixed32.preencode(state, m.key)
-    encoding0_1.preencode(state, m.peers)
+    state.end++ // max flag is 1 so always one byte
+
+    if (m.location) c.string.preencode(state, m.location)
   },
   encode(state, m) {
+    const flags = m.location ? 1 : 0
+
     c.fixed32.encode(state, m.key)
-    encoding0_1.encode(state, m.peers)
+    c.uint.encode(state, flags)
+
+    if (m.location) c.string.encode(state, m.location)
   },
   decode(state) {
     const r0 = c.fixed32.decode(state)
-    const r1 = encoding0_1.decode(state)
+    const flags = c.uint.decode(state)
+
+    return {
+      key: r0,
+      location: (flags & 1) !== 0 ? c.string.decode(state) : null
+    }
+  }
+}
+
+// @blind-peer-router/assignment.peers
+const encoding1_1 = c.array(c.frame(encoding0))
+
+// @blind-peer-router/assignment
+const encoding1 = {
+  preencode(state, m) {
+    c.fixed32.preencode(state, m.key)
+    encoding1_1.preencode(state, m.peers)
+  },
+  encode(state, m) {
+    c.fixed32.encode(state, m.key)
+    encoding1_1.encode(state, m.peers)
+  },
+  decode(state) {
+    const r0 = c.fixed32.decode(state)
+    const r1 = encoding1_1.decode(state)
 
     return {
       key: r0,
@@ -36,7 +63,7 @@ const encoding0 = {
 }
 
 // @blind-peer-router/resolve-peers-request
-const encoding1 = {
+const encoding2 = {
   preencode(state, m) {
     c.fixed32.preencode(state, m.key)
   },
@@ -53,18 +80,18 @@ const encoding1 = {
 }
 
 // @blind-peer-router/resolve-peers-response.peers
-const encoding2_0 = encoding0_1
+const encoding3_0 = encoding1_1
 
 // @blind-peer-router/resolve-peers-response
-const encoding2 = {
+const encoding3 = {
   preencode(state, m) {
-    encoding2_0.preencode(state, m.peers)
+    encoding3_0.preencode(state, m.peers)
   },
   encode(state, m) {
-    encoding2_0.encode(state, m.peers)
+    encoding3_0.encode(state, m.peers)
   },
   decode(state) {
-    const r0 = encoding2_0.decode(state)
+    const r0 = encoding3_0.decode(state)
 
     return {
       peers: r0
@@ -73,18 +100,18 @@ const encoding2 = {
 }
 
 // @blind-peer-router/assignment/hyperdb#0.peers
-const encoding3_1 = encoding0_1
+const encoding4_1 = encoding1_1
 
 // @blind-peer-router/assignment/hyperdb#0
-const encoding3 = {
+const encoding4 = {
   preencode(state, m) {
-    encoding3_1.preencode(state, m.peers)
+    encoding4_1.preencode(state, m.peers)
   },
   encode(state, m) {
-    encoding3_1.encode(state, m.peers)
+    encoding4_1.encode(state, m.peers)
   },
   decode(state) {
-    const r1 = encoding3_1.decode(state)
+    const r1 = encoding4_1.decode(state)
 
     return {
       key: null,
@@ -116,14 +143,16 @@ function getEnum(name) {
 
 function getEncoding(name) {
   switch (name) {
-    case '@blind-peer-router/assignment':
+    case '@blind-peer-router/peer':
       return encoding0
-    case '@blind-peer-router/resolve-peers-request':
+    case '@blind-peer-router/assignment':
       return encoding1
-    case '@blind-peer-router/resolve-peers-response':
+    case '@blind-peer-router/resolve-peers-request':
       return encoding2
-    case '@blind-peer-router/assignment/hyperdb#0':
+    case '@blind-peer-router/resolve-peers-response':
       return encoding3
+    case '@blind-peer-router/assignment/hyperdb#0':
+      return encoding4
     default:
       throw new Error('Encoder not found ' + name)
   }
