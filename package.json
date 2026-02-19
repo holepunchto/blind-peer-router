@@ -35,7 +35,7 @@
     "corestore": "^7.7.0",
     "graceful-goodbye": "^1.3.3",
     "hypercore-id-encoding": "^1.3.0",
-    "hyperdb": "holepunchto/hyperdb#bee2",
+    "hyperdb": "^6.0.0",
     "hyperschema": "^1.10.4",
     "hyperswarm": "^4.16.0",
     "paparam": "^1.9.1",
