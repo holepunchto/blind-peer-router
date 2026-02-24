@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require('fs').promises
 const path = require('path')
 const Corestore = require('corestore')
 const Hyperswarm = require('hyperswarm')
@@ -12,27 +13,31 @@ const pino = require('pino')
 
 const BlindPeerRouter = require('.')
 
+const DEFAULT_CONFIG_PATH = './config.json'
+const DEFAULT_STORAGE_PATH = './storage'
+
 const runCmd = command(
   'run',
-  flag('--storage|-s [path]', 'storage path, defaults to ./blind-peer-router'),
-  flag('--blind-peer|-b <key>', 'blind peer public key (repeatable, z32 or hex)').multiple(),
+  flag('--storage|-s [path]', `storage path, defaults to ${DEFAULT_STORAGE_PATH}`),
+  flag('--config|-c [path]', `config path, defaults to ${DEFAULT_CONFIG_PATH}`),
   flag('--replica-count|-r [count]', 'peers per key, defaults to 1'),
 
   async function ({ flags }) {
     const logger = pino({ name: 'blind-peer-router' })
-    const storage = path.resolve(flags.storage || 'blind-peer-router')
 
-    const rawPeers = flags.blindPeer ?? []
-    if (rawPeers.length === 0) {
-      logger.error('At least one --blind-peer is required')
+    const config = JSON.parse(await fs.readFile(flags.config || DEFAULT_CONFIG_PATH, 'utf-8'))
+    const blindPeerKeys = Object.keys(config.blindPeers || {})
+    if (!blindPeerKeys.length) {
+      logger.error('At least one blind-peer is required')
       process.exit(1)
     }
-
-    const blindPeerKeys = rawPeers.map((k) => IdEnc.decode(k))
+    const storage = path.resolve(flags.storage || DEFAULT_STORAGE_PATH)
     const replicaCount = flags.replicaCount ? parseInt(flags.replicaCount) : 1
 
+    const blindPeers = blindPeerKeys.map((k) => ({ ...config.blindPeers[k], key: IdEnc.decode(k) }))
+
     logger.info(`Using storage: ${storage}`)
-    logger.info(`Blind peers: ${rawPeers.length}`)
+    logger.info(`Blind peers: ${blindPeers.length}`)
     logger.info(`Replica count: ${replicaCount}`)
 
     const store = new Corestore(storage)
@@ -44,7 +49,7 @@ const runCmd = command(
     router.use(defaultMiddleware({ logger: { instance: logger } }))
 
     const service = new BlindPeerRouter(store, swarm, router, {
-      blindPeerKeys,
+      blindPeers,
       replicaCount
     })
 
