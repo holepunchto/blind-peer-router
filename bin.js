@@ -18,23 +18,21 @@ const DEFAULT_STORAGE_PATH = './storage'
 
 const runCmd = command(
   'run',
-  flag('--storage|-s [path]', `storage path, defaults to ${DEFAULT_STORAGE_PATH}`),
   flag('--config|-c [path]', `config path, defaults to ${DEFAULT_CONFIG_PATH}`),
+  flag('--storage|-s [path]', `storage path, defaults to ${DEFAULT_STORAGE_PATH}`),
   flag('--replica-count|-r [count]', 'peers per key, defaults to 1'),
 
   async function ({ flags }) {
     const logger = pino({ name: 'blind-peer-router' })
 
     const config = JSON.parse(await fs.readFile(flags.config || DEFAULT_CONFIG_PATH, 'utf-8'))
-    const blindPeerKeys = Object.keys(config.blindPeers || {})
-    if (!blindPeerKeys.length) {
+    const blindPeers = Object.entries(config.blindPeers).map(([k, v]) => ({ ...v, key: IdEnc.decode(k) }))
+    if (!blindPeers.length) {
       logger.error('At least one blind-peer is required')
       process.exit(1)
     }
     const storage = path.resolve(flags.storage || DEFAULT_STORAGE_PATH)
     const replicaCount = flags.replicaCount ? parseInt(flags.replicaCount) : 1
-
-    const blindPeers = blindPeerKeys.map((k) => ({ ...config.blindPeers[k], key: IdEnc.decode(k) }))
 
     logger.info(`Using storage: ${storage}`)
     logger.info(`Blind peers: ${blindPeers.length}`)
