@@ -13,12 +13,11 @@ const HyperInstrument = require('hyper-instrument')
 
 const BlindPeerRouter = require('.')
 
-const DEFAULT_STORAGE_PATH = './storage'
 const SERVICE_NAME = 'blind-peer-router'
 
 const runCmd = command(
   'run',
-  flag('--storage|-s [path]', `storage path, defaults to ${DEFAULT_STORAGE_PATH}`),
+  flag('--storage|-s [path]', 'storage path, defaults to ./blind-peer-router'),
   flag('--blind-peer|-b <key>', 'blind peer public key (repeatable, z32 or hex)').multiple(),
   flag('--replica-count|-r [count]', 'peers per key, defaults to 1'),
   flag('--scraper-public-key <scraperPublicKey>', 'Public key of a dht-prometheus scraper'),
