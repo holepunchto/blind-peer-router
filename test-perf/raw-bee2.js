@@ -18,6 +18,7 @@ class BlindPeerRouter extends ReadyResource {
   }
 
   async _close() {
+    await this.batch.flush()
     await this.db.close()
   }
 
