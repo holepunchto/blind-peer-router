@@ -26,7 +26,7 @@ const runCmd = command(
 
   async function ({ flags }) {
     const logger = pino({ name: 'blind-peer-router' })
-    const storage = path.resolve(flags.storage || DEFAULT_STORAGE_PATH)
+    const storage = path.resolve(flags.storage || 'blind-peer-router')
 
     const rawPeers = flags.blindPeer ?? []
     if (rawPeers.length === 0) {
@@ -73,6 +73,7 @@ const runCmd = command(
 
 /** @type {function(BlindPeerRouter, Logger)} */
 async function registerScraper(service, logger) {
+  const { scraperPublicKey, scraperSecret, scraperAlias } = runCmd.flags
   const instrumentation = new HyperInstrument({
     swarm: service.swarm,
     corestore: service.store,
