@@ -74,6 +74,10 @@ const runCmd = command(
 /** @type {function(BlindPeerRouter, Logger)} */
 async function registerScraper(service, logger) {
   const { scraperPublicKey, scraperSecret, scraperAlias } = runCmd.flags
+  if (!scraperPublicKey || !scraperSecret) {
+    logger.warn('Scraper public key or secret not provided, skipping scraper registration')
+    return
+  }
   const instrumentation = new HyperInstrument({
     swarm: service.swarm,
     corestore: service.store,
