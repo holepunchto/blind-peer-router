@@ -9,18 +9,25 @@ const IdEnc = require('hypercore-id-encoding')
 const goodbye = require('graceful-goodbye')
 const { command, flag } = require('paparam')
 const pino = require('pino')
+const HyperInstrument = require('hyper-instrument')
 
 const BlindPeerRouter = require('.')
 
+const DEFAULT_STORAGE_PATH = './storage'
+const SERVICE_NAME = 'blind-peer-router'
+
 const runCmd = command(
   'run',
-  flag('--storage|-s [path]', 'storage path, defaults to ./blind-peer-router'),
+  flag('--storage|-s [path]', `storage path, defaults to ${DEFAULT_STORAGE_PATH}`),
   flag('--blind-peer|-b <key>', 'blind peer public key (repeatable, z32 or hex)').multiple(),
   flag('--replica-count|-r [count]', 'peers per key, defaults to 1'),
+  flag('--scraper-public-key <scraperPublicKey>', 'Public key of a dht-prometheus scraper'),
+  flag('--scraper-secret <scraperSecret>', 'Secret of the dht-prometheus scraper'),
+  flag('--scraper-alias <scraperAlias>', '(Optional) Alias of scraper service'),
 
   async function ({ flags }) {
     const logger = pino({ name: 'blind-peer-router' })
-    const storage = path.resolve(flags.storage || 'blind-peer-router')
+    const storage = path.resolve(flags.storage || DEFAULT_STORAGE_PATH)
 
     const rawPeers = flags.blindPeer ?? []
     if (rawPeers.length === 0) {
@@ -60,8 +67,28 @@ const runCmd = command(
 
     logger.info(`Public key: ${IdEnc.normalize(service.publicKey)}`)
     logger.info(`DB key: ${IdEnc.normalize(service.db.core.key)}`)
+
+    await registerScraper(service, logger)
   }
 )
+
+/** @type {function(BlindPeerRouter, Logger)} */
+async function registerScraper(service, logger) {
+  const instrumentation = new HyperInstrument({
+    swarm: service.swarm,
+    corestore: service.store,
+    scraperPublicKey,
+    scraperSecret,
+    prometheusServiceName: SERVICE_NAME,
+    prometheusAlias:
+      scraperAlias || `${SERVICE_NAME}-${IdEnc.normalize(service.swarm.keyPair.publicKey)}`,
+    version: require('./package.json').version
+  })
+  goodbye(() => instrumentation.close())
+
+  instrumentation.registerLogger(logger)
+  await instrumentation.ready()
+}
 
 const cmd = command('blind-peer-router', runCmd)
 
