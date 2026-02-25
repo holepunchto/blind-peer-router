@@ -63,6 +63,7 @@ class BlindPeerRouter extends ReadyResource {
     await this.db.ready()
     await this.router.ready()
 
+    const db = this.db
     const lock = new ScopeLock({ debounce: true })
     async function flush() {
       if ((await lock.lock()) === false) return
