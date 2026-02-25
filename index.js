@@ -72,7 +72,7 @@ class BlindPeerRouter extends ReadyResource {
 
     if (!this.autoFlush) {
       this._flushTimer = setInterval(() => {
-        if (!this._pendingFlush) return
+        if (!this._pendingFlush || this.db.updates.size < 1000) return
         this._pendingFlush = false
         flush()
       }, this.flushInterval)
