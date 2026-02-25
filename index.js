@@ -1,6 +1,7 @@
 const ReadyResource = require('ready-resource')
 const HyperDB = require('hyperdb')
 const xorDistance = require('xor-distance')
+const ScopeLock = require('scope-lock')
 
 const spec = require('./spec/hyperdb')
 const { resolveStruct } = require('./spec/hyperschema')
@@ -62,11 +63,18 @@ class BlindPeerRouter extends ReadyResource {
     await this.db.ready()
     await this.router.ready()
 
+    const lock = new ScopeLock({ debounce: true })
+    async function flush() {
+      if ((await lock.lock()) === false) return
+      await db.flush().catch(noop)
+      lock.unlock()
+    }
+
     if (!this.autoFlush) {
       this._flushTimer = setInterval(() => {
         if (!this._pendingFlush) return
         this._pendingFlush = false
-        this.db.flush().catch(noop)
+        flush()
       }, this.flushInterval)
       this._flushTimer.unref()
     }
