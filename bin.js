@@ -26,7 +26,10 @@ const runCmd = command(
     const logger = pino({ name: 'blind-peer-router' })
 
     const config = JSON.parse(await fs.readFile(flags.config || DEFAULT_CONFIG_PATH, 'utf-8'))
-    const blindPeers = Object.entries(config.blindPeers).map(([k, v]) => ({ ...v, key: IdEnc.decode(k) }))
+    const blindPeers = Object.entries(config.blindPeers).map(([k, v]) => ({
+      ...v,
+      key: IdEnc.decode(k)
+    }))
     if (!blindPeers.length) {
       logger.error('At least one blind-peer is required')
       process.exit(1)
