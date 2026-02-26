@@ -31,7 +31,7 @@ const runCmd = command(
 
     const blindPeers = Object.entries(config.blindPeers).map(([k, v]) => ({
       key: IdEnc.decode(k),
-      location: v.location,
+      location: v.location
     }))
     if (!blindPeers.length) {
       logger.error('At least one blind-peer is required')
@@ -41,7 +41,7 @@ const runCmd = command(
 
     const storage = path.resolve(flags.storage || DEFAULT_STORAGE_PATH)
     logger.info(`Using storage: ${storage}`)
-    
+
     const replicaCount = flags.replicaCount ? parseInt(flags.replicaCount) : 1
     logger.info(`Replica count: ${replicaCount}`)
 
