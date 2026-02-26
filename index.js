@@ -93,7 +93,7 @@ class BlindPeerRouter extends ReadyResource {
     await this.router.close()
     if (this._pendingFlush) {
       this._pendingFlush = false
-      await this.db.flush()
+      if (this.db.updated()) await this.db.flush()
     }
     await this.db.close()
   }
