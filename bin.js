@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+const fs = require('fs').promises
+const os = require('os')
 const path = require('path')
 const Corestore = require('corestore')
 const Hyperswarm = require('hyperswarm')
@@ -14,11 +16,13 @@ const HyperInstrument = require('hyper-instrument')
 const BlindPeerRouter = require('.')
 
 const SERVICE_NAME = 'blind-peer-router'
+const DEFAULT_CONFIG_PATH = path.join(os.homedir(), '.blind-peer-router', 'config.json')
+const DEFAULT_STORAGE_PATH = path.join(os.homedir(), '.blind-peer-router', 'storage')
 
 const runCmd = command(
   'run',
-  flag('--storage|-s [path]', 'storage path, defaults to ./blind-peer-router'),
-  flag('--blind-peer|-b <key>', 'blind peer public key (repeatable, z32 or hex)').multiple(),
+  flag('--config|-c [path]', `config path, defaults to ${DEFAULT_CONFIG_PATH}`),
+  flag('--storage|-s [path]', `storage path, defaults to ${DEFAULT_STORAGE_PATH}`),
   flag('--replica-count|-r [count]', 'peers per key, defaults to 1'),
   flag('--scraper-public-key <scraperPublicKey>', 'Public key of a dht-prometheus scraper'),
   flag('--scraper-secret <scraperSecret>', 'Secret of the dht-prometheus scraper'),
@@ -26,19 +30,25 @@ const runCmd = command(
 
   async function ({ flags }) {
     const logger = pino({ name: 'blind-peer-router' })
-    const storage = path.resolve(flags.storage || 'blind-peer-router')
 
-    const rawPeers = flags.blindPeer ?? []
-    if (rawPeers.length === 0) {
-      logger.error('At least one --blind-peer is required')
+    const configPath = path.resolve(flags.config || DEFAULT_CONFIG_PATH)
+    logger.info(`Reading config from: ${configPath}`)
+    const config = JSON.parse(await fs.readFile(configPath, 'utf-8'))
+
+    const blindPeers = Object.entries(config.blindPeers).map(([k, v]) => ({
+      key: IdEnc.decode(k),
+      location: v.location
+    }))
+    if (!blindPeers.length) {
+      logger.error('At least one blind-peer is required')
       process.exit(1)
     }
+    logger.info(`Blind peers: ${blindPeers.length}`)
 
-    const blindPeerKeys = rawPeers.map((k) => IdEnc.decode(k))
-    const replicaCount = flags.replicaCount ? parseInt(flags.replicaCount) : 1
-
+    const storage = path.resolve(flags.storage || DEFAULT_STORAGE_PATH)
     logger.info(`Using storage: ${storage}`)
-    logger.info(`Blind peers: ${rawPeers.length}`)
+
+    const replicaCount = flags.replicaCount ? parseInt(flags.replicaCount) : 1
     logger.info(`Replica count: ${replicaCount}`)
 
     const store = new Corestore(storage)
@@ -50,7 +60,7 @@ const runCmd = command(
     router.use(defaultMiddleware({ logger: { instance: logger } }))
 
     const service = new BlindPeerRouter(store, swarm, router, {
-      blindPeerKeys,
+      blindPeers,
       replicaCount
     })
 
