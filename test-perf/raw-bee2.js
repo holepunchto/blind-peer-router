@@ -13,17 +13,19 @@ class RawBee2 extends ReadyResource {
   async _open() {
     await this.store.ready()
     await this.db.ready()
-
-    this.batch = this.db.write()
   }
 
   async _close() {
-    await this.batch.flush()
+    await this.batch?.flush()
     await this.db.close()
   }
 
   async insert(key, value) {
     await this.db.get(key)
+
+    if (!this.batch) {
+      this.batch = this.db.write()
+    }
     this.batch.tryPut(key, value)
 
     if (this.batch.ops.length > 1000) {
