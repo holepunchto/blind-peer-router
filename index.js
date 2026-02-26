@@ -27,7 +27,13 @@ class BlindPeerRouter extends ReadyResource {
     store,
     swarm,
     router,
-    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1_000, minFlushSize = 1000 } = {}
+    {
+      blindPeers,
+      replicaCount = 1,
+      autoFlush = false,
+      flushInterval = 1_000,
+      minFlushSize = 1000
+    } = {}
   ) {
     super()
 
