@@ -22,6 +22,7 @@ class BlindPeerRouter extends ReadyResource {
    * @param {number} [opts.replicaCount=1] - peers to assign per key
    * @param {boolean} [opts.autoFlush=false] - flush immediately on each insert
    * @param {number} [opts.flushInterval=1000] - flush interval in ms (when autoFlush is false)
+   * @param {number} [opts.minFlushSize=1000] - minimum pending updates to trigger flush (when autoFlush is false)
    */
   constructor(
     store,
@@ -31,7 +32,7 @@ class BlindPeerRouter extends ReadyResource {
       blindPeers,
       replicaCount = 1,
       autoFlush = false,
-      flushInterval = 1_000,
+      flushInterval = 1000,
       minFlushSize = 1000
     } = {}
   ) {
