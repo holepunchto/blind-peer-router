@@ -22,19 +22,12 @@ class BlindPeerRouter extends ReadyResource {
    * @param {number} [opts.replicaCount=1] - peers to assign per key
    * @param {boolean} [opts.autoFlush=false] - flush immediately on each insert
    * @param {number} [opts.flushInterval=1000] - flush interval in ms (when autoFlush is false)
-   * @param {number} [opts.minFlushSize=1000] - minimum pending updates to trigger flush (when autoFlush is false)
    */
   constructor(
     store,
     swarm,
     router,
-    {
-      blindPeers,
-      replicaCount = 1,
-      autoFlush = false,
-      flushInterval = 1000,
-      minFlushSize = 1000
-    } = {}
+    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1000 } = {}
   ) {
     super()
 
@@ -45,7 +38,6 @@ class BlindPeerRouter extends ReadyResource {
     this.replicaCount = Math.min(replicaCount, blindPeers.length)
     this.autoFlush = autoFlush
     this.flushInterval = flushInterval
-    this.minFlushSize = minFlushSize
 
     this.db = HyperDB.bee2(this.store, spec)
     this._flushTimer = null
@@ -133,7 +125,7 @@ class BlindPeerRouter extends ReadyResource {
 
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 
-    if (this.autoFlush || this.db.updates.size >= this.minFlushSize) {
+    if (this.autoFlush) {
       await this.db.flush()
     } else {
       this._pendingFlush = true
