@@ -25,7 +25,10 @@ const runCmd = command(
   async function ({ flags }) {
     const logger = pino({ name: 'blind-peer-router' })
 
-    const config = JSON.parse(await fs.readFile(flags.config || DEFAULT_CONFIG_PATH, 'utf-8'))
+    const configPath = path.resolve(flags.config || DEFAULT_CONFIG_PATH)
+    logger.info(`Reading config from: ${configPath}`)
+    const config = JSON.parse(await fs.readFile(configPath, 'utf-8'))
+
     const blindPeers = Object.entries(config.blindPeers).map(([k, v]) => ({
       key: IdEnc.decode(k),
       location: v.location,
