@@ -13,8 +13,8 @@ const pino = require('pino')
 
 const BlindPeerRouter = require('.')
 
-const DEFAULT_CONFIG_PATH = './config.json'
-const DEFAULT_STORAGE_PATH = './storage'
+const DEFAULT_CONFIG_PATH = '~/.blind-peer-router/config.json'
+const DEFAULT_STORAGE_PATH = '~/.blind-peer-router/storage'
 
 const runCmd = command(
   'run',
@@ -27,8 +27,8 @@ const runCmd = command(
 
     const config = JSON.parse(await fs.readFile(flags.config || DEFAULT_CONFIG_PATH, 'utf-8'))
     const blindPeers = Object.entries(config.blindPeers).map(([k, v]) => ({
-      ...v,
-      key: IdEnc.decode(k)
+      key: IdEnc.decode(k),
+      location: v.location,
     }))
     if (!blindPeers.length) {
       logger.error('At least one blind-peer is required')
