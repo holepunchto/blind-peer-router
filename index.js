@@ -75,7 +75,7 @@ class BlindPeerRouter extends ReadyResource {
 
     if (!this.autoFlush) {
       this._flushTimer = setInterval(() => {
-        if (!this._pendingFlush || this.db.updates.size < this.minFlushSize) return
+        if (!this._pendingFlush) return
         this._pendingFlush = false
         this._flush()
       }, this.flushInterval)
@@ -133,7 +133,7 @@ class BlindPeerRouter extends ReadyResource {
 
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 
-    if (this.autoFlush) {
+    if (this.autoFlush || this.db.updates.size >= this.minFlushSize) {
       await this.db.flush()
     } else {
       this._pendingFlush = true
