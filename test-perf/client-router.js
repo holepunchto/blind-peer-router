@@ -7,6 +7,9 @@ Prepare sample blind peers config.json with:
   }
 }
 
+Comment out the defaultMiddleware in bin.js or increase the rateLimit option
+  // router.use(defaultMiddleware({ logger: { instance: logger } }))
+
 Then run the blind-peer-router service with:
   ./bin.js run -c ./config.json -s ./storage
 
@@ -49,6 +52,9 @@ async function main() {
   }
 
   console.timeEnd('main')
+
+  await client.close()
+  await dht.destroy()
 }
 
 main()
