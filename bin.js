@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs').promises
+const os = require('os')
 const path = require('path')
 const Corestore = require('corestore')
 const Hyperswarm = require('hyperswarm')
@@ -13,8 +14,8 @@ const pino = require('pino')
 
 const BlindPeerRouter = require('.')
 
-const DEFAULT_CONFIG_PATH = '~/.blind-peer-router/config.json'
-const DEFAULT_STORAGE_PATH = '~/.blind-peer-router/storage'
+const DEFAULT_CONFIG_PATH = path.join(os.homedir(), '.blind-peer-router', 'config.json')
+const DEFAULT_STORAGE_PATH = path.join(os.homedir(), '.blind-peer-router', 'storage')
 
 const runCmd = command(
   'run',
