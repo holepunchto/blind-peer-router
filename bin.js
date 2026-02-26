@@ -11,9 +11,11 @@ const IdEnc = require('hypercore-id-encoding')
 const goodbye = require('graceful-goodbye')
 const { command, flag } = require('paparam')
 const pino = require('pino')
+const HyperInstrument = require('hyper-instrument')
 
 const BlindPeerRouter = require('.')
 
+const SERVICE_NAME = 'blind-peer-router'
 const DEFAULT_CONFIG_PATH = path.join(os.homedir(), '.blind-peer-router', 'config.json')
 const DEFAULT_STORAGE_PATH = path.join(os.homedir(), '.blind-peer-router', 'storage')
 
@@ -22,6 +24,9 @@ const runCmd = command(
   flag('--config|-c [path]', `config path, defaults to ${DEFAULT_CONFIG_PATH}`),
   flag('--storage|-s [path]', `storage path, defaults to ${DEFAULT_STORAGE_PATH}`),
   flag('--replica-count|-r [count]', 'peers per key, defaults to 1'),
+  flag('--scraper-public-key <scraperPublicKey>', 'Public key of a dht-prometheus scraper'),
+  flag('--scraper-secret <scraperSecret>', 'Secret of the dht-prometheus scraper'),
+  flag('--scraper-alias <scraperAlias>', '(Optional) Alias of scraper service'),
 
   async function ({ flags }) {
     const logger = pino({ name: 'blind-peer-router' })
@@ -59,8 +64,18 @@ const runCmd = command(
       replicaCount
     })
 
+    const { scraperPublicKey, scraperSecret, scraperAlias } = flags
+    const instrumentation = await registerScraper(
+      service,
+      logger,
+      scraperPublicKey,
+      scraperSecret,
+      scraperAlias
+    )
+
     goodbye(async () => {
       logger.info('Shutting down blind-peer-router service')
+      if (instrumentation) await instrumentation.close()
       await service.close()
       await swarm.destroy()
       await store.close()
@@ -73,6 +88,28 @@ const runCmd = command(
     logger.info(`DB key: ${IdEnc.normalize(service.db.core.key)}`)
   }
 )
+
+/** @type {function(BlindPeerRouter, Logger, string, string, string)} */
+async function registerScraper(service, logger, scraperPublicKey, scraperSecret, scraperAlias) {
+  if (!scraperPublicKey || !scraperSecret) {
+    return
+  }
+  logger.info('Registering scraper')
+
+  const instrumentation = new HyperInstrument({
+    swarm: service.swarm,
+    corestore: service.store,
+    scraperPublicKey,
+    scraperSecret,
+    prometheusServiceName: SERVICE_NAME,
+    prometheusAlias:
+      scraperAlias || `${SERVICE_NAME}-${IdEnc.normalize(service.swarm.keyPair.publicKey)}`,
+    version: require('./package.json').version
+  })
+  instrumentation.registerLogger(logger)
+  await instrumentation.ready()
+  return instrumentation
+}
 
 const cmd = command('blind-peer-router', runCmd)
 
