@@ -16,7 +16,7 @@ const ResolvePeersResponse = resolveStruct('@blind-peer-router/resolve-peers-res
 
 async function setupTestnet(t) {
   const testnet = await createTestnet()
-  t.teardown(() => testnet.destroy())
+  t.teardown(() => testnet.destroy(), { order: 5000 })
   return testnet
 }
 
@@ -24,22 +24,28 @@ async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2 
   const storage = await tmpDir(t)
 
   const store = new Corestore(storage)
-  t.teardown(() => store.close())
 
   const swarm = new Hyperswarm({
     keyPair: await store.createKeyPair('swarm-key'),
     bootstrap
   })
-  t.teardown(() => swarm.destroy())
 
   const router = new ProtomuxRPCRouter()
-  t.teardown(() => router.close())
 
   const service = new BlindPeerRouter(store, swarm, router, {
     blindPeers,
     replicaCount
   })
-  t.teardown(() => service.close())
+
+  t.teardown(
+    async () => {
+      await service.close()
+      await router.close()
+      await swarm.destroy()
+      await store.close()
+    },
+    { order: 3000 }
+  )
 
   await service.ready()
   return service
@@ -47,10 +53,9 @@ async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2 
 
 async function setupClient(t, bootstrap, serverPublicKey) {
   const dht = new HyperDHT({ bootstrap })
-  t.teardown(() => dht.destroy())
+  t.teardown(() => dht.destroy(), { order: 4000 })
 
   const stream = dht.connect(serverPublicKey)
-  t.teardown(() => stream.destroy())
   stream.on('error', () => {})
   await stream.opened
 
@@ -58,7 +63,6 @@ async function setupClient(t, bootstrap, serverPublicKey) {
     id: serverPublicKey,
     valueEncoding: null
   })
-  t.teardown(() => rpc.destroy())
 
   return rpc
 }

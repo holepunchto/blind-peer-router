@@ -1,6 +1,8 @@
 const ReadyResource = require('ready-resource')
 const HyperDB = require('hyperdb')
 const xorDistance = require('xor-distance')
+const ScopeLock = require('scope-lock')
+const safetyCatch = require('safety-catch')
 
 const spec = require('./spec/hyperdb')
 const { resolveStruct } = require('./spec/hyperschema')
@@ -25,7 +27,7 @@ class BlindPeerRouter extends ReadyResource {
     store,
     swarm,
     router,
-    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1_000 } = {}
+    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1000 } = {}
   ) {
     super()
 
@@ -40,6 +42,7 @@ class BlindPeerRouter extends ReadyResource {
     this.db = HyperDB.bee2(this.store, spec)
     this._flushTimer = null
     this._pendingFlush = false
+    this.lock = new ScopeLock({ debounce: true })
 
     this.router.method(
       'resolve-peers',
@@ -66,7 +69,7 @@ class BlindPeerRouter extends ReadyResource {
       this._flushTimer = setInterval(() => {
         if (!this._pendingFlush) return
         this._pendingFlush = false
-        this.db.flush().catch(noop)
+        this._flush()
       }, this.flushInterval)
       this._flushTimer.unref()
     }
@@ -88,11 +91,21 @@ class BlindPeerRouter extends ReadyResource {
     }
 
     await this.router.close()
-    if (this._pendingFlush) {
-      this._pendingFlush = false
-      await this.db.flush()
-    }
+    await this._flush()
     await this.db.close()
+  }
+
+  async _flush() {
+    // not allowed to throw
+    if (!(await this.lock.lock())) return
+    try {
+      if (this.db.updated()) await this.db.flush()
+    } catch (e) {
+      this.emit('flush-error', e)
+      safetyCatch(e)
+    } finally {
+      this.lock.unlock()
+    }
   }
 
   /** RPC handler: returns existing peers or resolves closest peers for key. */
@@ -147,7 +160,5 @@ function getClosestMirrorList(key, list, n) {
 
   return list.slice(0, n)
 }
-
-function noop() {}
 
 module.exports = BlindPeerRouter

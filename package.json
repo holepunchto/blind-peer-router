@@ -47,6 +47,8 @@
     "protomux-rpc-middleware": "^1.0.0",
     "protomux-rpc-router": "^1.0.0",
     "ready-resource": "^1.1.2",
+    "safety-catch": "^1.0.2",
+    "scope-lock": "^1.2.4",
     "xor-distance": "^2.0.0"
   },
   "devDependencies": {
