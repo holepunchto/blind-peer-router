@@ -27,7 +27,7 @@ class BlindPeerRouter extends ReadyResource {
     store,
     swarm,
     router,
-    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1_000 } = {}
+    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1_000, minFlushSize = 1000 } = {}
   ) {
     super()
 
@@ -38,6 +38,7 @@ class BlindPeerRouter extends ReadyResource {
     this.replicaCount = Math.min(replicaCount, blindPeers.length)
     this.autoFlush = autoFlush
     this.flushInterval = flushInterval
+    this.minFlushSize = minFlushSize
 
     this.db = HyperDB.bee2(this.store, spec)
     this._flushTimer = null
@@ -67,7 +68,7 @@ class BlindPeerRouter extends ReadyResource {
 
     if (!this.autoFlush) {
       this._flushTimer = setInterval(() => {
-        if (!this._pendingFlush || this.db.updates.size < 1000) return
+        if (!this._pendingFlush || this.db.updates.size < this.minFlushSize) return
         this._pendingFlush = false
         this._flush().bind(this)
       }, this.flushInterval)
