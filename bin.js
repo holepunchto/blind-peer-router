@@ -54,8 +54,12 @@ const runCmd = command(
       replicaCount
     })
 
+    const { scraperPublicKey, scraperSecret, scraperAlias } = flags
+    const instrumentation = await registerScraper(service, logger, scraperPublicKey, scraperSecret, scraperAlias)
+    
     goodbye(async () => {
       logger.info('Shutting down blind-peer-router service')
+      if (instrumentation) await instrumentation.close()
       await service.close()
       await swarm.destroy()
       await store.close()
@@ -66,18 +70,16 @@ const runCmd = command(
 
     logger.info(`Public key: ${IdEnc.normalize(service.publicKey)}`)
     logger.info(`DB key: ${IdEnc.normalize(service.db.core.key)}`)
-
-    await registerScraper(service, logger)
   }
 )
 
-/** @type {function(BlindPeerRouter, Logger)} */
-async function registerScraper(service, logger) {
-  const { scraperPublicKey, scraperSecret, scraperAlias } = runCmd.flags
+/** @type {function(BlindPeerRouter, Logger, string, string, string)} */
+async function registerScraper(service, logger, scraperPublicKey, scraperSecret, scraperAlias) {
   if (!scraperPublicKey || !scraperSecret) {
-    logger.warn('Scraper public key or secret not provided, skipping scraper registration')
     return
   }
+  logger.info('Registering scraper')
+
   const instrumentation = new HyperInstrument({
     swarm: service.swarm,
     corestore: service.store,
@@ -88,10 +90,9 @@ async function registerScraper(service, logger) {
       scraperAlias || `${SERVICE_NAME}-${IdEnc.normalize(service.swarm.keyPair.publicKey)}`,
     version: require('./package.json').version
   })
-  goodbye(() => instrumentation.close())
-
   instrumentation.registerLogger(logger)
   await instrumentation.ready()
+  return instrumentation
 }
 
 const cmd = command('blind-peer-router', runCmd)
