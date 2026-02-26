@@ -53,25 +53,17 @@ async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2 
 
 async function setupClient(t, bootstrap, serverPublicKey) {
   const dht = new HyperDHT({ bootstrap })
+  t.teardown(() => dht.destroy(), { order: 4000 })
 
   const stream = dht.connect(serverPublicKey)
   stream.on('error', () => {})
+  await stream.opened
 
   const rpc = new ProtomuxRPC(stream, {
     id: serverPublicKey,
     valueEncoding: null
   })
 
-  t.teardown(
-    async () => {
-      await rpc.destroy()
-      await stream.destroy()
-      await dht.destroy()
-    },
-    { order: 4000 }
-  )
-
-  await stream.opened
   return rpc
 }
 
