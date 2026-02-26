@@ -1,10 +1,14 @@
+/*
+Run: node client-hyperdb.js
+*/
+
 const crypto = require('hypercore-crypto')
 const Corestore = require('corestore')
 
 const RawHyperDB = require('./raw-hyperdb')
 
-const storage = './storage-raw-2'
-const COUNT_RUNS = 1000000
+const storage = './storage-raw-hyperdb'
+const COUNT_RUNS = 100000
 
 async function main() {
   const store = new Corestore(storage)

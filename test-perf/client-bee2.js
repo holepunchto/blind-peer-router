@@ -1,10 +1,14 @@
+/*
+Run: node client-bee2.js
+*/
+
 const crypto = require('hypercore-crypto')
 const Corestore = require('corestore')
 
 const RawBee2 = require('./raw-bee2')
 
-const storage = './storage-raw-1'
-const COUNT_RUNS = 1000000
+const storage = './storage-raw-bee2'
+const COUNT_RUNS = 100000
 
 async function main() {
   const store = new Corestore(storage)
