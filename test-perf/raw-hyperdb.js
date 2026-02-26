@@ -2,7 +2,7 @@ const ReadyResource = require('ready-resource')
 const HyperDB = require('hyperdb')
 const spec = require('../spec/hyperdb')
 
-class BlindPeerRouter extends ReadyResource {
+class RawHyperDB extends ReadyResource {
   constructor(store) {
     super()
 
@@ -35,4 +35,4 @@ class BlindPeerRouter extends ReadyResource {
   }
 }
 
-module.exports = BlindPeerRouter
+module.exports = RawHyperDB

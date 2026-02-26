@@ -1,14 +1,14 @@
 const crypto = require('hypercore-crypto')
 const Corestore = require('corestore')
 
-const BlindPeerRouter = require('./raw-bee2')
+const RawBee2 = require('./raw-bee2')
 
 const storage = './storage-raw-1'
 const COUNT_RUNS = 1000000
 
 async function main() {
   const store = new Corestore(storage)
-  const service = new BlindPeerRouter(store)
+  const service = new RawBee2(store)
   await service.ready()
 
   console.time('main')

@@ -1,14 +1,14 @@
 const crypto = require('hypercore-crypto')
 const Corestore = require('corestore')
 
-const BlindPeerRouter = require('./raw-hyperdb')
+const RawHyperDB = require('./raw-hyperdb')
 
 const storage = './storage-raw-2'
 const COUNT_RUNS = 1000000
 
 async function main() {
   const store = new Corestore(storage)
-  const service = new BlindPeerRouter(store)
+  const service = new RawHyperDB(store)
   await service.ready()
 
   console.time('main')

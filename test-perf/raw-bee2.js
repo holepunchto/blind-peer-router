@@ -1,7 +1,7 @@
 const ReadyResource = require('ready-resource')
 const Hyperbee2 = require('hyperbee2')
 
-class BlindPeerRouter extends ReadyResource {
+class RawBee2 extends ReadyResource {
   constructor(store) {
     super()
 
@@ -36,4 +36,4 @@ class BlindPeerRouter extends ReadyResource {
   }
 }
 
-module.exports = BlindPeerRouter
+module.exports = RawBee2
