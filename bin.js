@@ -37,11 +37,12 @@ const runCmd = command(
       logger.error('At least one blind-peer is required')
       process.exit(1)
     }
-    const storage = path.resolve(flags.storage || DEFAULT_STORAGE_PATH)
-    const replicaCount = flags.replicaCount ? parseInt(flags.replicaCount) : 1
-
-    logger.info(`Using storage: ${storage}`)
     logger.info(`Blind peers: ${blindPeers.length}`)
+
+    const storage = path.resolve(flags.storage || DEFAULT_STORAGE_PATH)
+    logger.info(`Using storage: ${storage}`)
+    
+    const replicaCount = flags.replicaCount ? parseInt(flags.replicaCount) : 1
     logger.info(`Replica count: ${replicaCount}`)
 
     const store = new Corestore(storage)
