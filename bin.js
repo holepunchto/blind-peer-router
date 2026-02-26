@@ -55,8 +55,14 @@ const runCmd = command(
     })
 
     const { scraperPublicKey, scraperSecret, scraperAlias } = flags
-    const instrumentation = await registerScraper(service, logger, scraperPublicKey, scraperSecret, scraperAlias)
-    
+    const instrumentation = await registerScraper(
+      service,
+      logger,
+      scraperPublicKey,
+      scraperSecret,
+      scraperAlias
+    )
+
     goodbye(async () => {
       logger.info('Shutting down blind-peer-router service')
       if (instrumentation) await instrumentation.close()
