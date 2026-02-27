@@ -2,7 +2,7 @@
 
 # blind-peer-router
 
-> **POC** — This is a proof-of-concept. Blind peers must be provided as a fixed set at startup. Dynamic peer discovery and registration are not yet implemented.
+> **POC** — This is a proof-of-concept still. Breaking changes possible till the V1 release.
 
 Single-writer RPC service that maps content keys to blind peer assignments. Clients request peers for a given content key and the service resolves the closest configured blind peers by XOR distance, persisting assignments in HyperDB so subsequent requests for the same key return the same peers.
 
@@ -14,11 +14,20 @@ npm install blind-peer-router
 
 ## Usage
 
+Define a config file at `~/.blind-peer-router/config.json` file with blind peer entries:
+
 ```
-blind-peer-router run --blind-peer <key1> --blind-peer <key2>
+{
+  "blindPeers": {
+    "<blindPeerKey>": {},
+    "<otherBlindPeerKey>": {},
+  }
+}
 ```
 
-The set of blind peers is fixed at startup via CLI flags. You must know the public keys of your blind peer instances ahead of time and pass them in.
+```
+blind-peer-router run
+```
 
 ## How it works
 
@@ -27,13 +36,9 @@ The set of blind peers is fixed at startup via CLI flags. You must know the publ
 3. If the key already has an assignment, the stored peers are returned.
 4. Otherwise the service picks the closest peers by XOR distance, stores the assignment in HyperDB, and returns the peer keys.
 
-### Current limitations (POC)
+### L limitations
 
-- **Fixed peer set**: Blind peers must be passed at startup. There is no dynamic registration or discovery — the operator must manually add/remove peers by restarting the service.
-- **Single writer**: Only one instance writes to the database. No multi-indexer / Autobase support yet.
-- **No health checks**: The service does not verify that configured blind peers are online or healthy before assigning them.
-- **No rebalancing**: If a blind peer goes down, existing assignments to it are not migrated.
-- **Best-effort persistence in interval mode**: when using periodic flushes, recent assignments may be lost on unclean shutdown.
+- **Best-effort persistence in interval mode**: we use periodic flushes, so recent assignments may be lost on unclean shutdown.
 
 ## CLI
 
