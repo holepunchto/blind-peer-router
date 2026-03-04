@@ -33,9 +33,9 @@ async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2 
   const router = new ProtomuxRPCRouter()
 
   const service = new BlindPeerRouter(store, swarm, router, {
-    blindPeers,
     replicaCount
   })
+  service.addBlindPeers(blindPeers)
 
   t.teardown(
     async () => {

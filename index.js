@@ -15,10 +15,6 @@ class BlindPeerRouter extends ReadyResource {
    * @param {import('hyperswarm')} swarm
    * @param {import('protomux-rpc-router')} router
    * @param {object} opts
-   * @param {{
-   *   key: Buffer,
-   *   location?: string
-   * }[]} opts.blindPeers - blind peers
    * @param {number} [opts.replicaCount=1] - peers to assign per key
    * @param {boolean} [opts.autoFlush=false] - flush immediately on each insert
    * @param {number} [opts.flushInterval=1000] - flush interval in ms (when autoFlush is false)
@@ -27,15 +23,14 @@ class BlindPeerRouter extends ReadyResource {
     store,
     swarm,
     router,
-    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1000 } = {}
+    { replicaCount = 1, autoFlush = false, flushInterval = 1000 } = {}
   ) {
     super()
 
     this.store = store
     this.swarm = swarm
     this.router = router
-    this.blindPeers = blindPeers
-    this.replicaCount = Math.min(replicaCount, blindPeers.length)
+    this.replicaCount = replicaCount
     this.autoFlush = autoFlush
     this.flushInterval = flushInterval
 
@@ -52,11 +47,23 @@ class BlindPeerRouter extends ReadyResource {
       },
       this._onResolvePeers.bind(this)
     )
+
+    this.blindPeers = []
   }
 
   /** @returns {Buffer} swarm public key for client discovery */
   get publicKey() {
     return this.swarm.keyPair.publicKey
+  }
+
+  /**
+   * @param {{
+   *   key: Buffer
+   *   location?: string
+   * }[]} blindPeers
+   * */
+  addBlindPeers(blindPeers) {
+    this.blindPeers.push(...blindPeers)
   }
 
   /** Opens db, router, and joins the swarm. */
