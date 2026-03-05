@@ -20,7 +20,7 @@ async function setupTestnet(t) {
   return testnet
 }
 
-async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2 } = {}) {
+async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2, flushInterval } = {}) {
   const storage = await tmpDir(t)
 
   const store = new Corestore(storage)
@@ -34,7 +34,8 @@ async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2 
 
   const service = new BlindPeerRouter(store, swarm, router, {
     blindPeers,
-    replicaCount
+    replicaCount,
+    flushInterval
   })
 
   t.teardown(
@@ -132,13 +133,48 @@ test('replicaCount is capped to number of blind peers', async (t) => {
   const { bootstrap } = await setupTestnet(t)
   const blindPeerKeys = [b4a.alloc(32, 0xab)]
   const blindPeers = blindPeerKeys.map((key, i) => ({ key, location: `loc-${i}` }))
-  const service = await setupRoutingService(t, bootstrap, blindPeers, {
-    replicaCount: 5
+
+  const store = new Corestore(await tmpDir(t))
+  const swarm = new Hyperswarm({ bootstrap  })
+  const router = new ProtomuxRPCRouter()
+
+  t.exception(() => { return new BlindPeerRouter(store, swarm, router, {
+      blindPeers,
+      replicaCount: 3
+    })
   })
+
+  await router.close()
+  await swarm.destroy()
+  await store.close()
+})
+
+test('flushes every interval, if there is something to flush', async (t) => {
+  const { bootstrap } = await setupTestnet(t)
+  const blindPeerKeys = createBlindPeerKeys(5)
+  const blindPeers = blindPeerKeys.map((key, i) => ({ key, location: `loc-${i}` }))
+
+  const service = await setupRoutingService(t, bootstrap, blindPeers, { flushInterval: 500 })
   const rpc = await setupClient(t, bootstrap, service.publicKey)
 
-  const key = b4a.alloc(32, 0xcc)
-  const res = await resolvePeers(rpc, key)
+  await resolvePeers(rpc, b4a.from('a'.repeat(64), 'hex'))
+  t.is(service.stats.flushes, 0, 'not yet flushed')
+  t.is(service.stats.inserts, 1, 'insert counted')
 
-  t.is(res.peers.length, 1, 'capped to available blind peers')
+  await new Promise(resolve => setTimeout(resolve, 600))
+  t.is(service.stats.flushes, 1, 'flushed')
+
+  await new Promise(resolve => setTimeout(resolve, 600))
+  t.is(service.stats.flushes, 1, 'No flush when there is nothing to flush')
+
+  await resolvePeers(rpc, b4a.from('a'.repeat(64), 'hex'))
+  await new Promise(resolve => setTimeout(resolve, 600))
+  t.is(service.stats.flushes, 1, 'No flush when there is nothing to flush (existing data)')
+  t.is(service.stats.inserts, 1, 'inserts not increased if existing data')
+
+  await resolvePeers(rpc, b4a.from('b'.repeat(64), 'hex'))
+  await resolvePeers(rpc, b4a.from('c'.repeat(64), 'hex'))
+  await new Promise(resolve => setTimeout(resolve, 600))
+  t.is(service.stats.flushes, 2)
+  t.is(service.stats.inserts, 3)
 })
