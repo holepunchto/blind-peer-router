@@ -178,8 +178,10 @@ test('flushes every interval, if there is something to flush', async (t) => {
   t.is(service.stats.flushes, 1, 'No flush when there is nothing to flush (existing data)')
   t.is(service.stats.inserts, 1, 'inserts not increased if existing data')
 
-  await resolvePeers(rpc, b4a.from('b'.repeat(64), 'hex'))
-  await resolvePeers(rpc, b4a.from('c'.repeat(64), 'hex'))
+  await Promise.all([
+    resolvePeers(rpc, b4a.from('b'.repeat(64), 'hex')),
+    resolvePeers(rpc, b4a.from('c'.repeat(64), 'hex'))
+  ])
   await new Promise((resolve) => setTimeout(resolve, 600))
   t.is(service.stats.flushes, 2)
   t.is(service.stats.inserts, 3)
