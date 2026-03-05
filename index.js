@@ -64,7 +64,7 @@ class BlindPeerRouter extends ReadyResource {
     await this.router.ready()
 
     this._flushTimer = setInterval(() => {
-      if (this.db.updates.size === 0) return
+      if (!this.db.updated()) return
       this._flush()
     }, this.flushInterval)
     this._flushTimer.unref()
