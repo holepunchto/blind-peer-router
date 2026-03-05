@@ -143,12 +143,15 @@ test('replicaCount is capped to number of blind peers', async (t) => {
   const swarm = new Hyperswarm({ bootstrap })
   const router = new ProtomuxRPCRouter()
 
-  t.exception(() => {
-    return new BlindPeerRouter(store, swarm, router, {
-      blindPeers,
-      replicaCount: 3
-    })
-  })
+  t.exception(
+    () => {
+      return new BlindPeerRouter(store, swarm, router, {
+        blindPeers,
+        replicaCount: 3
+      })
+    },
+    /Insufficient blind peers to satisfy replica requirement/
+  )
 
   await router.close()
   await swarm.destroy()
