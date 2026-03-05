@@ -90,9 +90,9 @@ class BlindPeerRouter extends ReadyResource {
     // not allowed to throw
     if (!(await this.lock.lock())) return
 
-    this.stats.flushes++
     try {
       if (this.db.updated()) await this.db.flush()
+      this.stats.flushes++
     } catch (e) {
       this.emit('flush-error', e)
       safetyCatch(e)
