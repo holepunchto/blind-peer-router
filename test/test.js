@@ -20,7 +20,12 @@ async function setupTestnet(t) {
   return testnet
 }
 
-async function setupRoutingService(t, bootstrap, blindPeers, { replicaCount = 2, flushInterval } = {}) {
+async function setupRoutingService(
+  t,
+  bootstrap,
+  blindPeers,
+  { replicaCount = 2, flushInterval } = {}
+) {
   const storage = await tmpDir(t)
 
   const store = new Corestore(storage)
@@ -135,10 +140,11 @@ test('replicaCount is capped to number of blind peers', async (t) => {
   const blindPeers = blindPeerKeys.map((key, i) => ({ key, location: `loc-${i}` }))
 
   const store = new Corestore(await tmpDir(t))
-  const swarm = new Hyperswarm({ bootstrap  })
+  const swarm = new Hyperswarm({ bootstrap })
   const router = new ProtomuxRPCRouter()
 
-  t.exception(() => { return new BlindPeerRouter(store, swarm, router, {
+  t.exception(() => {
+    return new BlindPeerRouter(store, swarm, router, {
       blindPeers,
       replicaCount: 3
     })
@@ -161,20 +167,20 @@ test('flushes every interval, if there is something to flush', async (t) => {
   t.is(service.stats.flushes, 0, 'not yet flushed')
   t.is(service.stats.inserts, 1, 'insert counted')
 
-  await new Promise(resolve => setTimeout(resolve, 600))
+  await new Promise((resolve) => setTimeout(resolve, 600))
   t.is(service.stats.flushes, 1, 'flushed')
 
-  await new Promise(resolve => setTimeout(resolve, 600))
+  await new Promise((resolve) => setTimeout(resolve, 600))
   t.is(service.stats.flushes, 1, 'No flush when there is nothing to flush')
 
   await resolvePeers(rpc, b4a.from('a'.repeat(64), 'hex'))
-  await new Promise(resolve => setTimeout(resolve, 600))
+  await new Promise((resolve) => setTimeout(resolve, 600))
   t.is(service.stats.flushes, 1, 'No flush when there is nothing to flush (existing data)')
   t.is(service.stats.inserts, 1, 'inserts not increased if existing data')
 
   await resolvePeers(rpc, b4a.from('b'.repeat(64), 'hex'))
   await resolvePeers(rpc, b4a.from('c'.repeat(64), 'hex'))
-  await new Promise(resolve => setTimeout(resolve, 600))
+  await new Promise((resolve) => setTimeout(resolve, 600))
   t.is(service.stats.flushes, 2)
   t.is(service.stats.inserts, 3)
 })

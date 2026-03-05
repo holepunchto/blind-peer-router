@@ -23,12 +23,7 @@ class BlindPeerRouter extends ReadyResource {
    * @param {boolean} [opts.autoFlush=false] - flush immediately on each insert
    * @param {number} [opts.flushInterval=1000] - flush interval in ms (when autoFlush is false)
    */
-  constructor(
-    store,
-    swarm,
-    router,
-    { blindPeers, replicaCount = 1, flushInterval = 1000 } = {}
-  ) {
+  constructor(store, swarm, router, { blindPeers, replicaCount = 1, flushInterval = 1000 } = {}) {
     super()
 
     this.store = store
@@ -36,7 +31,9 @@ class BlindPeerRouter extends ReadyResource {
     this.router = router
     this.blindPeers = blindPeers
 
-    if (replicaCount > blindPeers.length) throw new Error('Insufficient blind peers to satisfy replica requirement')
+    if (replicaCount > blindPeers.length) {
+      throw new Error('Insufficient blind peers to satisfy replica requirement')
+    }
     this.replicaCount = replicaCount
 
     this.flushInterval = flushInterval
@@ -78,7 +75,7 @@ class BlindPeerRouter extends ReadyResource {
     })
 
     await this.swarm.listen()
-    this.swarm.join(this.db.core.discoveryKey )
+    this.swarm.join(this.db.core.discoveryKey)
   }
 
   async _close() {
