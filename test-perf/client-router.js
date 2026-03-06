@@ -21,10 +21,7 @@ const crypto = require('hypercore-crypto')
 const IdEnc = require('hypercore-id-encoding')
 const HyperDHT = require('hyperdht')
 const ProtomuxRpcClient = require('protomux-rpc-client')
-
-const { resolveStruct } = require('../spec/hyperschema')
-const ResolvePeersRequest = resolveStruct('@blind-peer-router/resolve-peers-request')
-const ResolvePeersResponse = resolveStruct('@blind-peer-router/resolve-peers-response')
+const { RouterResolvePeersRequest, RouterResolvePeersResponse } = require('blind-peer-encodings')
 
 const serverPublicKey = process.argv[2]
 const COUNT_RUNS = 100000
@@ -42,8 +39,8 @@ async function main() {
       'resolve-peers',
       { key: coreKey },
       {
-        requestEncoding: ResolvePeersRequest,
-        responseEncoding: ResolvePeersResponse
+        requestEncoding: RouterResolvePeersRequest,
+        responseEncoding: RouterResolvePeersResponse
       }
     )
     if (i % 1000 === 0) {
