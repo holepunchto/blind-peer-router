@@ -4,10 +4,11 @@ const xorDistance = require('xor-distance')
 const ScopeLock = require('scope-lock')
 const safetyCatch = require('safety-catch')
 
-const spec = require('./spec/hyperdb')
-const { resolveStruct } = require('./spec/hyperschema')
-const ResolvePeersRequest = resolveStruct('@blind-peer-router/resolve-peers-request')
-const ResolvePeersResponse = resolveStruct('@blind-peer-router/resolve-peers-response')
+const {
+  routerDefinition: routerSpec,
+  RouterResolvePeersRequest,
+  RouterResolvePeersResponse
+} = require('blind-peer-encodings')
 
 class BlindPeerRouter extends ReadyResource {
   /**
@@ -39,7 +40,7 @@ class BlindPeerRouter extends ReadyResource {
     this.autoFlush = autoFlush
     this.flushInterval = flushInterval
 
-    this.db = HyperDB.bee2(this.store, spec)
+    this.db = HyperDB.bee2(this.store, routerSpec)
     this._flushTimer = null
     this._pendingFlush = false
     this.lock = new ScopeLock({ debounce: true })
@@ -47,8 +48,8 @@ class BlindPeerRouter extends ReadyResource {
     this.router.method(
       'resolve-peers',
       {
-        requestEncoding: ResolvePeersRequest,
-        responseEncoding: ResolvePeersResponse
+        requestEncoding: RouterResolvePeersRequest,
+        responseEncoding: RouterResolvePeersResponse
       },
       this._onResolvePeers.bind(this)
     )
