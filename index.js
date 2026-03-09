@@ -5,7 +5,7 @@ const ScopeLock = require('scope-lock')
 const safetyCatch = require('safety-catch')
 
 const {
-  definitionRouter,
+  routerDefinition: routerSpec,
   RouterResolvePeersRequest,
   RouterResolvePeersResponse
 } = require('blind-peer-encodings')
@@ -40,7 +40,7 @@ class BlindPeerRouter extends ReadyResource {
     this.autoFlush = autoFlush
     this.flushInterval = flushInterval
 
-    this.db = HyperDB.bee2(this.store, definitionRouter)
+    this.db = HyperDB.bee2(this.store, routerSpec)
     this._flushTimer = null
     this._pendingFlush = false
     this.lock = new ScopeLock({ debounce: true })
