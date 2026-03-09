@@ -8,11 +8,9 @@ const ProtomuxRPCRouter = require('protomux-rpc-router')
 const tmpDir = require('test-tmp')
 const b4a = require('b4a')
 const IdEnc = require('hypercore-id-encoding')
+const { RouterResolvePeersRequest, RouterResolvePeersResponse } = require('blind-peer-encodings')
 
 const BlindPeerRouter = require('..')
-const { resolveStruct } = require('../spec/hyperschema')
-const ResolvePeersRequest = resolveStruct('@blind-peer-router/resolve-peers-request')
-const ResolvePeersResponse = resolveStruct('@blind-peer-router/resolve-peers-response')
 
 async function setupTestnet(t) {
   const testnet = await createTestnet()
@@ -86,8 +84,8 @@ async function resolvePeers(rpc, key) {
     'resolve-peers',
     { key },
     {
-      requestEncoding: ResolvePeersRequest,
-      responseEncoding: ResolvePeersResponse
+      requestEncoding: RouterResolvePeersRequest,
+      responseEncoding: RouterResolvePeersResponse
     }
   )
 }
