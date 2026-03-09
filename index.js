@@ -24,25 +24,24 @@ class BlindPeerRouter extends ReadyResource {
    * @param {boolean} [opts.autoFlush=false] - flush immediately on each insert
    * @param {number} [opts.flushInterval=1000] - flush interval in ms (when autoFlush is false)
    */
-  constructor(
-    store,
-    swarm,
-    router,
-    { blindPeers, replicaCount = 1, autoFlush = false, flushInterval = 1000 } = {}
-  ) {
+  constructor(store, swarm, router, { blindPeers, replicaCount = 1, flushInterval = 1000 } = {}) {
     super()
 
     this.store = store
     this.swarm = swarm
     this.router = router
     this.blindPeers = blindPeers
-    this.replicaCount = Math.min(replicaCount, blindPeers.length)
-    this.autoFlush = autoFlush
+
+    if (replicaCount > blindPeers.length) {
+      throw new Error('Insufficient blind peers to satisfy replica requirement')
+    }
+    this.replicaCount = replicaCount
+
     this.flushInterval = flushInterval
+    this.stats = { flushes: 0, inserts: 0 }
 
     this.db = HyperDB.bee2(this.store, routerSpec)
     this._flushTimer = null
-    this._pendingFlush = false
     this.lock = new ScopeLock({ debounce: true })
 
     this.router.method(
@@ -60,20 +59,16 @@ class BlindPeerRouter extends ReadyResource {
     return this.swarm.keyPair.publicKey
   }
 
-  /** Opens db, router, and joins the swarm. */
   async _open() {
     await this.store.ready()
     await this.db.ready()
     await this.router.ready()
 
-    if (!this.autoFlush) {
-      this._flushTimer = setInterval(() => {
-        if (!this._pendingFlush) return
-        this._pendingFlush = false
-        this._flush()
-      }, this.flushInterval)
-      this._flushTimer.unref()
-    }
+    this._flushTimer = setInterval(() => {
+      if (!this.db.updated()) return
+      this._flush()
+    }, this.flushInterval)
+    this._flushTimer.unref()
 
     this.swarm.on('connection', (conn) => {
       this.store.replicate(conn)
@@ -84,12 +79,8 @@ class BlindPeerRouter extends ReadyResource {
     this.swarm.join(this.db.core.discoveryKey)
   }
 
-  /** Closes router and db. Caller owns swarm/store teardown. */
   async _close() {
-    if (this._flushTimer !== null) {
-      clearInterval(this._flushTimer)
-      this._flushTimer = null
-    }
+    clearInterval(this._flushTimer)
 
     await this.router.close()
     await this._flush()
@@ -99,8 +90,12 @@ class BlindPeerRouter extends ReadyResource {
   async _flush() {
     // not allowed to throw
     if (!(await this.lock.lock())) return
+
     try {
-      if (this.db.updated()) await this.db.flush()
+      if (this.db.updated()) {
+        await this.db.flush()
+        this.stats.flushes++
+      }
     } catch (e) {
       this.emit('flush-error', e)
       safetyCatch(e)
@@ -109,7 +104,6 @@ class BlindPeerRouter extends ReadyResource {
     }
   }
 
-  /** RPC handler: returns existing peers or resolves closest peers for key. */
   async _onResolvePeers(req) {
     const key = req.key
 
@@ -124,13 +118,11 @@ class BlindPeerRouter extends ReadyResource {
     const peerKeys = getClosestMirrorList(key, blindPeerKeys, this.replicaCount)
     const peers = this.blindPeers.filter((p) => peerKeys.includes(p.key))
 
+    // Note: this is prone to race conditions, but our assignment function
+    // is determinstic, so it doesn't matter in practice (we might insert
+    // the same key-value pair multiple times)
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
-
-    if (this.autoFlush) {
-      await this.db.flush()
-    } else {
-      this._pendingFlush = true
-    }
+    this.stats.inserts++
 
     return { peers }
   }
