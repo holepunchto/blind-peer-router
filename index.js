@@ -3,6 +3,7 @@ const HyperDB = require('hyperdb')
 const xorDistance = require('xor-distance')
 const ScopeLock = require('scope-lock')
 const safetyCatch = require('safety-catch')
+const IdEnc = require('hypercore-id-encoding')
 
 const {
   routerDefinition: routerSpec,
@@ -24,7 +25,12 @@ class BlindPeerRouter extends ReadyResource {
    * @param {boolean} [opts.autoFlush=false] - flush immediately on each insert
    * @param {number} [opts.flushInterval=1000] - flush interval in ms (when autoFlush is false)
    */
-  constructor(store, swarm, router, { blindPeers, replicaCount = 1, flushInterval = 1000 } = {}) {
+  constructor(
+    store,
+    swarm,
+    router,
+    { blindPeers, replicaCount = 1, flushInterval = 1000, maxBatchSize = 1000 } = {}
+  ) {
     super()
 
     this.store = store
@@ -38,11 +44,15 @@ class BlindPeerRouter extends ReadyResource {
     this.replicaCount = replicaCount
 
     this.flushInterval = flushInterval
+    this.maxBatchSize = maxBatchSize
+    this.overloaded = false
     this.stats = { flushes: 0, inserts: 0 }
 
     this.db = HyperDB.bee2(this.store, routerSpec)
     this._flushTimer = null
     this.lock = new ScopeLock({ debounce: true })
+
+    this._pendingBatch = new Map()
 
     this.router.method(
       'resolve-peers',
@@ -65,7 +75,7 @@ class BlindPeerRouter extends ReadyResource {
     await this.router.ready()
 
     this._flushTimer = setInterval(() => {
-      if (!this.db.updated()) return
+      if (this._pendingBatch.size === 0) return
       this._flush()
     }, this.flushInterval)
     this._flushTimer.unref()
@@ -92,10 +102,13 @@ class BlindPeerRouter extends ReadyResource {
     if (!(await this.lock.lock())) return
 
     try {
-      if (this.db.updated()) {
-        await this.db.flush()
-        this.stats.flushes++
-      }
+      const batch = this._pendingBatch
+      this._pendingBatch = new Map()
+      await this.db.insertAll(batch.values())
+      await this.db.flush()
+      this.stats.flushes++
+      this.overloaded = this._pendingBatch < this.maxBatchSize
+      this.emit('flushed')
     } catch (e) {
       this.emit('flush-error', e)
       safetyCatch(e)
@@ -105,7 +118,18 @@ class BlindPeerRouter extends ReadyResource {
   }
 
   async _onResolvePeers(req) {
-    const key = req.key
+    return await this.resolvePeers(req.key)
+  }
+
+  async resolvePeers(key) {
+    if (this.overloaded) throw new Error('Overloaded')
+    if (!this.opened) await this.ready()
+
+    const normKey = IdEnc.normalize(key)
+    const batched = this._pendingBatch.get(normKey)
+    if (batched) {
+      return { peers: batched[1].peers }
+    }
 
     const existing = await this.db.get('@blind-peer-router/assignment', {
       key
@@ -114,17 +138,28 @@ class BlindPeerRouter extends ReadyResource {
       return { peers: existing.peers }
     }
 
+    // Note: when we are actually overloaded, many requests will reach here ~simultaneously
+    if (this._pendingBatch.size >= this.maxBatchSize) {
+      this.overloaded = true
+      this._flush()
+      throw new Error('Overloaded')
+    }
+
     const blindPeerKeys = this.blindPeers.map((p) => p.key)
     const peerKeys = getClosestMirrorList(key, blindPeerKeys, this.replicaCount)
     const peers = this.blindPeers.filter((p) => peerKeys.includes(p.key))
 
     // Note: this is prone to race conditions, but our assignment function
-    // is determinstic, so it doesn't matter in practice (we might insert
+    // is determinstic, so it doesn't matter in prpromsactice (we might insert
     // the same key-value pair multiple times)
-    await this.db.insert('@blind-peer-router/assignment', { key, peers })
+    this._pendingBatch.set(normKey, ['@blind-peer-router/assignment', { key, peers }])
     this.stats.inserts++
 
     return { peers }
+  }
+
+  list(query = {}, opts = {}) {
+    return this.db.find('@blind-peer-router/assignment', query, opts)
   }
 }
 
