@@ -1,6 +1,6 @@
 const ReadyResource = require('ready-resource')
 const HyperDB = require('hyperdb')
-const spec = require('../spec/hyperdb')
+const { routerDefinition: spec } = require('blind-peer-encodings')
 
 class RawHyperDB extends ReadyResource {
   constructor(store) {
@@ -20,17 +20,33 @@ class RawHyperDB extends ReadyResource {
     await this.db.close()
   }
 
-  async insert(key, peers) {
-    await this.db.get('@blind-peer-router/assignment', {
-      key
-    })
+  async read(key) {
+    const timeKey = `${key.toString('hex')}-${Date.now()}`
+    console.time(timeKey)
+    await this.db.get('@blind-peer-router/assignment', { key })
+    console.timeEnd(timeKey)
+  }
+
+  async write(key, peers) {
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 
     if (this.db.updates.size > 1000) {
-      const key = `flush-${this.db.updates.size}-${Date.now()}`
-      console.time(key)
+      const timeKey = `flush-${this.db.updates.size}-${key.toString('hex')}-${Date.now()}`
+      console.time(timeKey)
       await this.db.flush()
-      console.timeEnd(key)
+      console.timeEnd(timeKey)
+    }
+  }
+
+  async getAndInsert(key, peers) {
+    await this.db.get('@blind-peer-router/assignment', { key })
+    await this.db.insert('@blind-peer-router/assignment', { key, peers })
+
+    if (this.db.updates.size > 1000) {
+      const timeKey = `flush-${this.db.updates.size}-${key.toString('hex')}-${Date.now()}`
+      console.time(timeKey)
+      await this.db.flush()
+      console.timeEnd(timeKey)
     }
   }
 }
