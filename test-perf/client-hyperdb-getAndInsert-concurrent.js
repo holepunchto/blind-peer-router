@@ -1,5 +1,5 @@
 /*
-Run: node client-hyperdb-write-100k-concurrent.js
+Run: node client-hyperdb-getAndInsert-concurrent.js
 */
 
 const crypto = require('hypercore-crypto')
@@ -7,7 +7,7 @@ const Corestore = require('corestore')
 
 const RawHyperDB = require('./raw-hyperdb')
 
-const storage = './storage-raw-hyperdb-100k-concurrent'
+const storage = './storage-hyperdb-getAndInsert-concurrent'
 const COUNT_RUNS = 100000
 const CHUNK_SIZE = 100
 
@@ -22,7 +22,7 @@ async function main() {
     await Promise.all(
       Array.from({ length: CHUNK_SIZE }, async () => {
         const coreKey = crypto.randomBytes(32)
-        await service.write(coreKey, [{ key: crypto.randomBytes(32) }])
+        await service.getAndInsert(coreKey, [{ key: crypto.randomBytes(32) }])
       })
     )
     console.log(i + CHUNK_SIZE, 'OK')
