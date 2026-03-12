@@ -5,6 +5,8 @@ const ScopeLock = require('scope-lock')
 const safetyCatch = require('safety-catch')
 const IdEnc = require('hypercore-id-encoding')
 
+const errors = require('./lib/errors')
+
 const {
   routerDefinition: routerSpec,
   RouterResolvePeersRequest,
@@ -122,7 +124,7 @@ class BlindPeerRouter extends ReadyResource {
   }
 
   async resolvePeers(key) {
-    if (this.overloaded) throw new Error('Overloaded')
+    if (this.overloaded) throw errors.OVERLOADED()
     if (!this.opened) await this.ready()
 
     const normKey = IdEnc.normalize(key)
@@ -142,7 +144,7 @@ class BlindPeerRouter extends ReadyResource {
     if (this._pendingBatch.size >= this.maxBatchSize) {
       this.overloaded = true
       this._flush()
-      throw new Error('Overloaded')
+      throw errors.OVERLOADED()
     }
 
     const blindPeerKeys = this.blindPeers.map((p) => p.key)

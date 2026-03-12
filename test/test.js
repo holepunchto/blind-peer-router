@@ -207,7 +207,7 @@ test('overloaded error if there are too many pending writes', async (t) => {
   t.is(results.filter((r) => r.status === 'fulfilled').length, 10, '10 fulfilled')
   const rejects = results.filter((r) => r.status === 'rejected')
   t.is(rejects.length, 2, '2 rejected')
-  t.ok(rejects[0].reason.cause.message.includes('Overloaded'), 'overloaded error')
+  t.is(rejects[0].reason.cause.code, 'OVERLOADED', 'overloaded error')
 
   await flushedProm
   await resolvePeers(rpc, hypCrypto.randomBytes(32))
