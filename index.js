@@ -107,7 +107,7 @@ class BlindPeerRouter extends ReadyResource {
       await this.db.insertAll(batch.values())
       await this.db.flush()
       this.stats.flushes++
-      this.overloaded = this._pendingBatch < this.maxBatchSize
+      this.overloaded = this._pendingBatch.size >= this.maxBatchSize
       this.emit('flushed')
     } catch (e) {
       this.emit('flush-error', e)
