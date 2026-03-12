@@ -1,3 +1,4 @@
+const { once } = require('events')
 const test = require('brittle')
 const createTestnet = require('hyperdht/testnet')
 const HyperDHT = require('hyperdht')
@@ -5,6 +6,7 @@ const Corestore = require('corestore')
 const Hyperswarm = require('hyperswarm')
 const ProtomuxRPC = require('protomux-rpc')
 const ProtomuxRPCRouter = require('protomux-rpc-router')
+const hypCrypto = require('hypercore-crypto')
 const tmpDir = require('test-tmp')
 const b4a = require('b4a')
 const IdEnc = require('hypercore-id-encoding')
@@ -22,7 +24,7 @@ async function setupRoutingService(
   t,
   bootstrap,
   blindPeers,
-  { replicaCount = 2, flushInterval } = {}
+  { replicaCount = 2, flushInterval, maxBatchSize } = {}
 ) {
   const storage = await tmpDir(t)
 
@@ -38,7 +40,8 @@ async function setupRoutingService(
   const service = new BlindPeerRouter(store, swarm, router, {
     blindPeers,
     replicaCount,
-    flushInterval
+    flushInterval,
+    maxBatchSize
   })
 
   t.teardown(
@@ -183,4 +186,30 @@ test('flushes every interval, if there is something to flush', async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 600))
   t.is(service.stats.flushes, 2)
   t.is(service.stats.inserts, 3)
+})
+
+test('overloaded error if there are too many pending writes', async (t) => {
+  const { bootstrap } = await setupTestnet(t)
+  const blindPeerKeys = createBlindPeerKeys(5)
+  const blindPeers = blindPeerKeys.map((key, i) => ({ key, location: `loc-${i}` }))
+
+  const service = await setupRoutingService(t, bootstrap, blindPeers, {
+    flushInterval: 1000,
+    maxBatchSize: 10
+  })
+  const rpc = await setupClient(t, bootstrap, service.publicKey)
+  const flushedProm = once(service, 'flushed')
+  const proms = []
+  for (let i = 0; i < 12; i++) {
+    proms.push(resolvePeers(rpc, hypCrypto.randomBytes(32)))
+  }
+  const results = await Promise.allSettled(proms)
+  t.is(results.filter((r) => r.status === 'fulfilled').length, 10, '10 fulfilled')
+  const rejects = results.filter((r) => r.status === 'rejected')
+  t.is(rejects.length, 2, '2 rejected')
+  t.is(rejects[0].reason.cause.code, 'OVERLOADED', 'overloaded error')
+
+  await flushedProm
+  await resolvePeers(rpc, hypCrypto.randomBytes(32))
+  t.pass('recovered from overloaded state')
 })

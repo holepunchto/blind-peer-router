@@ -18,7 +18,8 @@
     "index.js",
     "bin.js",
     "bin-bare.js",
-    "spec/"
+    "spec/",
+    "lib/"
   ],
   "keywords": [
     "blind-peer",
