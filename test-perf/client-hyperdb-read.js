@@ -1,7 +1,7 @@
 /*
 Run: 
-  node client-hyperdb-write-100k.js
-  node client-hyperdb-read-100k.js
+  node client-hyperdb-write.js (run once only)
+  node client-hyperdb-read.js
 */
 
 const Corestore = require('corestore')
@@ -10,10 +10,10 @@ const fs = require('fs').promises
 
 const RawHyperDB = require('./raw-hyperdb')
 
-const storage = './storage-raw-hyperdb-100k'
+const storage = './storage-hyperdb-write'
 
 async function main() {
-  const keys = JSON.parse(await fs.readFile('storage-100k.txt', 'utf8')).map(IdEnc.decode)
+  const keys = JSON.parse(await fs.readFile('storage-keys.txt', 'utf8')).map(IdEnc.decode)
 
   const store = new Corestore(storage)
   const service = new RawHyperDB(store)
