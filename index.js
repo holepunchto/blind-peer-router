@@ -150,7 +150,7 @@ class BlindPeerRouter extends ReadyResource {
     const peers = this.blindPeers.filter((p) => peerKeys.includes(p.key))
 
     // Note: this is prone to race conditions, but our assignment function
-    // is determinstic, so it doesn't matter in prpromsactice (we might insert
+    // is determinstic, so it doesn't matter in practice (we might insert
     // the same key-value pair multiple times)
     this._pendingBatch.set(normKey, ['@blind-peer-router/assignment', { key, peers }])
     this.stats.inserts++

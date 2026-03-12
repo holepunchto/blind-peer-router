@@ -9,6 +9,11 @@ const COUNT_RUNS = 100000
 const CONCURRENCY = 1000
 const LOG_INTERVAL = 1000
 
+// Note: under big loads, the service might throw Overloaded errors,
+// causing the load test to stop.
+// Use Promise.allSettled instead of Promise.all when awaiting the batch
+// to continue the load test instead
+
 async function main() {
   const store = new Corestore('client-router-db-test-corestore')
   const swarm = new Hyperswarm()
@@ -30,8 +35,6 @@ async function main() {
     if (batch.length === CONCURRENCY) {
       await Promise.all(batch)
       batch = []
-      // give time to flush
-      await new Promise((resolve) => setTimeout(resolve, 1000))
     }
 
     if (i % LOG_INTERVAL === 0) {
