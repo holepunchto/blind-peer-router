@@ -21,7 +21,7 @@ class RawHyperDB extends ReadyResource {
   }
 
   async read(key) {
-    const timeKey = `${key}-${Date.now()}`
+    const timeKey = `${key.toString('hex')}-${Date.now()}`
     console.time(timeKey)
     await this.db.get('@blind-peer-router/assignment', { key })
     console.timeEnd(timeKey)
