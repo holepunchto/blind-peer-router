@@ -38,7 +38,7 @@ class RawHyperDB extends ReadyResource {
     }
   }
 
-  async insert(key, peers) {
+  async getAndInsert(key, peers) {
     await this.db.get('@blind-peer-router/assignment', { key })
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 

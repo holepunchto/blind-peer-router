@@ -19,7 +19,7 @@ async function main() {
 
   for (let i = 0; i < COUNT_RUNS; i += 1) {
     const coreKey = crypto.randomBytes(32)
-    await service.insert(coreKey, [{ key: crypto.randomBytes(32) }])
+    await service.getAndInsert(coreKey, [{ key: crypto.randomBytes(32) }])
     if (i % 1000 === 0) {
       console.log(i, 'OK')
     }
