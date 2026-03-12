@@ -6,7 +6,7 @@ const Corestore = require('corestore')
 const Hyperswarm = require('hyperswarm')
 const ProtomuxRPC = require('protomux-rpc')
 const ProtomuxRPCRouter = require('protomux-rpc-router')
-const crypto = require('crypto')
+const hypCrypto = require('hypercore-crypto')
 const tmpDir = require('test-tmp')
 const b4a = require('b4a')
 const IdEnc = require('hypercore-id-encoding')
@@ -201,7 +201,7 @@ test('overloaded error if there are too many pending writes', async (t) => {
   const flushedProm = once(service, 'flushed')
   const proms = []
   for (let i = 0; i < 12; i++) {
-    proms.push(resolvePeers(rpc, crypto.randomBytes(32)))
+    proms.push(resolvePeers(rpc, hypCrypto.randomBytes(32)))
   }
   const results = await Promise.allSettled(proms)
   t.is(results.filter((r) => r.status === 'fulfilled').length, 10, '10 fulfilled')
@@ -210,6 +210,6 @@ test('overloaded error if there are too many pending writes', async (t) => {
   t.ok(rejects[0].reason.cause.message.includes('Overloaded'), 'overloaded error')
 
   await flushedProm
-  await resolvePeers(rpc, crypto.randomBytes(32))
+  await resolvePeers(rpc, hypCrypto.randomBytes(32))
   t.pass('recovered from overloaded state')
 })
