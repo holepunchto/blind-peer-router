@@ -7,7 +7,7 @@ const Corestore = require('corestore')
 
 const RawHyperDB = require('./raw-hyperdb')
 
-const storage = './storage-raw-hyperdb'
+const storage = './storage-raw-hyperdb-concurrent'
 const COUNT_RUNS = 100000
 const CHUNK_SIZE = 100
 
