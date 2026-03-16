@@ -1,6 +1,7 @@
 const ReadyResource = require('ready-resource')
 const HyperDB = require('hyperdb')
 const { routerDefinition: spec } = require('blind-peer-encodings')
+const ScopeLock = require('scope-lock')
 
 class RawHyperDB extends ReadyResource {
   constructor(store) {
@@ -8,6 +9,7 @@ class RawHyperDB extends ReadyResource {
 
     this.store = store
     this.db = HyperDB.bee2(this.store, spec)
+    this.lock = new ScopeLock({ debounce: true })
   }
 
   async _open() {
@@ -28,8 +30,11 @@ class RawHyperDB extends ReadyResource {
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 
     if (this.db.updates.size > 1000) {
-      await this.db.flush()
+      await this._flush()
+      return true
     }
+
+    return false
   }
 
   async getAndInsert(key, peers) {
@@ -37,7 +42,19 @@ class RawHyperDB extends ReadyResource {
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 
     if (this.db.updates.size > 1000) {
+      await this._flush()
+      return true
+    }
+
+    return false
+  }
+
+  async _flush() {
+    await this.lock.lock()
+    try {
       await this.db.flush()
+    } finally {
+      this.lock.unlock()
     }
   }
 }

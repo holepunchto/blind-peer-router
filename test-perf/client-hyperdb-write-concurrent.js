@@ -27,8 +27,14 @@ async function main() {
       Array.from({ length: CHUNK_SIZE }, async () => {
         const coreKey = crypto.randomBytes(32)
         const start = process.hrtime()
-        await service.write(coreKey, [{ key: crypto.randomBytes(32) }])
-        stats.push(hrtimeMs(start))
+        const flushed = await service.write(coreKey, [{ key: crypto.randomBytes(32) }])
+        const elapsed = hrtimeMs(start)
+
+        if (flushed) {
+          stats.pushFlush(elapsed)
+        } else {
+          stats.pushOp(elapsed)
+        }
       })
     )
 

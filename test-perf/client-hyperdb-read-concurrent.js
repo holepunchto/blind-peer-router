@@ -33,7 +33,7 @@ async function main() {
 
         const start = process.hrtime()
         await service.read(coreKey)
-        stats.push(hrtimeMs(start))
+        stats.pushOp(hrtimeMs(start))
       })
     )
 

@@ -29,7 +29,7 @@ async function main() {
 
     const start = process.hrtime()
     await service.read(coreKey)
-    stats.push(hrtimeMs(start))
+    stats.pushOp(hrtimeMs(start))
 
     if ((i + 1) % LOG_INTERVAL === 0) {
       stats.report(`read ${i + 1 - LOG_INTERVAL + 1}-${i + 1}`)

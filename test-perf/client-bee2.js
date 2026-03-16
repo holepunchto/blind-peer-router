@@ -24,8 +24,14 @@ async function main() {
     const coreKey = crypto.randomBytes(32)
 
     const start = process.hrtime()
-    await service.insert(coreKey, crypto.randomBytes(32))
-    stats.push(hrtimeMs(start))
+    const flushed = await service.insert(coreKey, crypto.randomBytes(32))
+    const elapsed = hrtimeMs(start)
+
+    if (flushed) {
+      stats.pushFlush(elapsed)
+    } else {
+      stats.pushOp(elapsed)
+    }
 
     if ((i + 1) % LOG_INTERVAL === 0) {
       stats.report(`insert ${i + 1 - LOG_INTERVAL + 1}-${i + 1}`)
