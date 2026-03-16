@@ -29,10 +29,7 @@ class RawBee2 extends ReadyResource {
     this.batch.tryPut(key, value)
 
     if (this.batch.ops.length > 1000) {
-      const key = `flush-${this.batch.ops.length}-${Date.now()}`
-      console.time(key)
       await this.batch.flush()
-      console.timeEnd(key)
       this.batch = this.db.write()
     }
   }

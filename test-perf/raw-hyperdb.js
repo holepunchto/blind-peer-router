@@ -21,20 +21,14 @@ class RawHyperDB extends ReadyResource {
   }
 
   async read(key) {
-    const timeKey = `${key.toString('hex')}-${Date.now()}`
-    console.time(timeKey)
-    await this.db.get('@blind-peer-router/assignment', { key })
-    console.timeEnd(timeKey)
+    return this.db.get('@blind-peer-router/assignment', { key })
   }
 
   async write(key, peers) {
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 
     if (this.db.updates.size > 1000) {
-      const timeKey = `flush-${this.db.updates.size}-${key.toString('hex')}-${Date.now()}`
-      console.time(timeKey)
       await this.db.flush()
-      console.timeEnd(timeKey)
     }
   }
 
@@ -43,10 +37,7 @@ class RawHyperDB extends ReadyResource {
     await this.db.insert('@blind-peer-router/assignment', { key, peers })
 
     if (this.db.updates.size > 1000) {
-      const timeKey = `flush-${this.db.updates.size}-${key.toString('hex')}-${Date.now()}`
-      console.time(timeKey)
       await this.db.flush()
-      console.timeEnd(timeKey)
     }
   }
 }

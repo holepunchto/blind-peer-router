@@ -1,5 +1,5 @@
 /*
-Run: 
+Run:
   node client-hyperdb-write.js (run once only)
   node client-hyperdb-read.js
 */
@@ -9,8 +9,10 @@ const IdEnc = require('hypercore-id-encoding')
 const fs = require('fs').promises
 
 const RawHyperDB = require('./raw-hyperdb')
+const { createStats, hrtimeMs } = require('./stats')
 
 const storage = './storage-hyperdb-write'
+const LOG_INTERVAL = 1000
 
 async function main() {
   const keys = JSON.parse(await fs.readFile('storage-keys.txt', 'utf8')).map(IdEnc.decode)
@@ -19,19 +21,28 @@ async function main() {
   const service = new RawHyperDB(store)
   await service.ready()
 
-  console.time('main')
+  const stats = createStats()
+  const globalStart = process.hrtime()
 
   for (let i = 0; i < keys.length; i += 1) {
-    const coreKey = keys[0]
+    const coreKey = keys[i]
+
+    const start = process.hrtime()
     await service.read(coreKey)
-    if (i % 1000 === 0) {
-      console.log(i, 'OK')
+    stats.push(hrtimeMs(start))
+
+    if ((i + 1) % LOG_INTERVAL === 0) {
+      stats.report(`read ${i + 1 - LOG_INTERVAL + 1}-${i + 1}`)
+      stats.reset()
     }
   }
 
   await service.close()
 
-  console.timeEnd('main')
+  const totalMs = hrtimeMs(globalStart)
+  console.log(
+    `\ntotal: ${keys.length} reads in ${(totalMs / 1000).toFixed(2)}s (${(keys.length / (totalMs / 1000)).toFixed(0)} ops/s)`
+  )
 }
 
 main()

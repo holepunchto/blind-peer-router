@@ -6,6 +6,7 @@ const crypto = require('hypercore-crypto')
 const Corestore = require('corestore')
 
 const RawHyperDB = require('./raw-hyperdb')
+const { createStats, hrtimeMs } = require('./stats')
 
 const storage = './storage-hyperdb-write-concurrent'
 const COUNT_RUNS = 100000
@@ -16,21 +17,39 @@ async function main() {
   const service = new RawHyperDB(store)
   await service.ready()
 
-  console.time('main')
+  const stats = createStats()
+  const globalStart = process.hrtime()
 
   for (let i = 0; i < COUNT_RUNS; i += CHUNK_SIZE) {
+    const batchStart = process.hrtime()
+
     await Promise.all(
       Array.from({ length: CHUNK_SIZE }, async () => {
         const coreKey = crypto.randomBytes(32)
+        const start = process.hrtime()
         await service.write(coreKey, [{ key: crypto.randomBytes(32) }])
+        stats.push(hrtimeMs(start))
       })
     )
-    console.log(i + CHUNK_SIZE, 'OK')
+
+    const batchMs = hrtimeMs(batchStart)
+    const done = i + CHUNK_SIZE
+    console.log(
+      `batch ${done}: ${CHUNK_SIZE} ops in ${batchMs.toFixed(1)}ms (${(CHUNK_SIZE / (batchMs / 1000)).toFixed(0)} ops/s)`
+    )
+
+    if (done % 1000 === 0) {
+      stats.report(`write ${done - 1000 + 1}-${done}`)
+      stats.reset()
+    }
   }
 
   await service.close()
 
-  console.timeEnd('main')
+  const totalMs = hrtimeMs(globalStart)
+  console.log(
+    `\ntotal: ${COUNT_RUNS} writes in ${(totalMs / 1000).toFixed(2)}s (${(COUNT_RUNS / (totalMs / 1000)).toFixed(0)} ops/s)`
+  )
 }
 
 main()
