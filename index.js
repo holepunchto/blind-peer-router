@@ -4,6 +4,7 @@ const xorDistance = require('xor-distance')
 const ScopeLock = require('scope-lock')
 const safetyCatch = require('safety-catch')
 const IdEnc = require('hypercore-id-encoding')
+const Hyperbee2 = require('hyperbee2')
 
 const errors = require('./lib/errors')
 
@@ -50,7 +51,7 @@ class BlindPeerRouter extends ReadyResource {
     this.overloaded = false
     this.stats = { flushes: 0, inserts: 0 }
 
-    this.db = HyperDB.bee2(this.store, routerSpec)
+    this.db = HyperDB.bee2(new Hyperbee2(this.store), routerSpec)
     this._flushTimer = null
     this.lock = new ScopeLock({ debounce: true })
 
