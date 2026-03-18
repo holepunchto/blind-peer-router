@@ -31,7 +31,7 @@ class RawHyperDB extends ReadyResource {
   async _close() {
     clearInterval(this._flushTimer)
 
-    await this.db.flush()
+    await this._flush()
     await this.db.close()
   }
 

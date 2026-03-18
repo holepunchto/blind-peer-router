@@ -25,7 +25,7 @@ async function main() {
   const globalStart = process.hrtime()
 
   for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
-    const batchStart = process.hrtime()
+    // const batchStart = process.hrtime()
 
     await Promise.all(
       Array.from({ length: CHUNK_SIZE }, async (v, k) => {
@@ -37,11 +37,11 @@ async function main() {
       })
     )
 
-    const batchMs = hrtimeMs(batchStart)
     const done = i + CHUNK_SIZE
-    console.log(
-      `batch ${done}: ${CHUNK_SIZE} ops in ${batchMs.toFixed(1)}ms (${(CHUNK_SIZE / (batchMs / 1000)).toFixed(0)} ops/s)`
-    )
+    // const batchMs = hrtimeMs(batchStart)
+    // console.log(
+    //   `batch ${done}: ${CHUNK_SIZE} ops in ${batchMs.toFixed(1)}ms (${(CHUNK_SIZE / (batchMs / 1000)).toFixed(0)} ops/s)`
+    // )
 
     if (done % 1000 === 0) {
       stats.report(`read ${done - 1000 + 1}-${done}`)
