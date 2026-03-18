@@ -28,7 +28,7 @@ class RawBee2 extends ReadyResource {
     }
     this.batch.tryPut(key, value)
 
-    if (this.batch.ops.length > 1000) {
+    if (this.batch.ops.length >= 1000) {
       await this.batch.flush()
       this.batch = this.db.write()
       return true

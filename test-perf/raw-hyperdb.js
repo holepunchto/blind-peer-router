@@ -44,6 +44,10 @@ class RawHyperDB extends ReadyResource {
 
     const normKey = IdEnc.normalize(key)
     this._pendingBatch.set(normKey, ['@blind-peer-router/assignment', { key, peers }])
+
+    if (this._pendingBatch.size >= 1000) {
+      this._flush()
+    }
   }
 
   async getAndInsert(key, peers) {
@@ -52,6 +56,10 @@ class RawHyperDB extends ReadyResource {
 
     const normKey = IdEnc.normalize(key)
     this._pendingBatch.set(normKey, ['@blind-peer-router/assignment', { key, peers }])
+
+    if (this._pendingBatch.size >= 1000) {
+      this._flush()
+    }
   }
 
   async _flush() {
