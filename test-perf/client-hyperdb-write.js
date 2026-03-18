@@ -6,6 +6,7 @@ const crypto = require('hypercore-crypto')
 const Corestore = require('corestore')
 const IdEnc = require('hypercore-id-encoding')
 const fs = require('fs').promises
+const goodbye = require('graceful-goodbye')
 
 const RawHyperDB = require('./raw-hyperdb')
 const { createStats, hrtimeMs } = require('./stats')
@@ -20,6 +21,7 @@ async function main() {
   const store = new Corestore(storage)
   const stats = createStats()
   const service = new RawHyperDB(store, { onflush: (ms) => stats.pushFlush(ms) })
+  goodbye(() => service.close())
   await service.ready()
   const globalStart = process.hrtime()
 

@@ -7,6 +7,7 @@ Run:
 const Corestore = require('corestore')
 const IdEnc = require('hypercore-id-encoding')
 const fs = require('fs').promises
+const goodbye = require('graceful-goodbye')
 
 const RawHyperDB = require('./raw-hyperdb')
 const { createStats, hrtimeMs } = require('./stats')
@@ -19,6 +20,7 @@ async function main() {
 
   const store = new Corestore(storage)
   const service = new RawHyperDB(store)
+  goodbye(() => service.close())
   await service.ready()
 
   const stats = createStats()

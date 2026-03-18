@@ -22,6 +22,7 @@ const IdEnc = require('hypercore-id-encoding')
 const HyperDHT = require('hyperdht')
 const ProtomuxRpcClient = require('protomux-rpc-client')
 const { RouterResolvePeersRequest, RouterResolvePeersResponse } = require('blind-peer-encodings')
+const goodbye = require('graceful-goodbye')
 
 const serverPublicKey = process.argv[2]
 const COUNT_RUNS = 100000
@@ -29,6 +30,10 @@ const COUNT_RUNS = 100000
 async function main() {
   const dht = new HyperDHT()
   const client = new ProtomuxRpcClient(dht)
+  goodbye(async () => {
+    await client.close()
+    await dht.destroy()
+  })
 
   console.time('main')
 

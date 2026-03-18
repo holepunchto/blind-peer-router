@@ -4,6 +4,7 @@ Run: node client-bee2.js
 
 const crypto = require('hypercore-crypto')
 const Corestore = require('corestore')
+const goodbye = require('graceful-goodbye')
 
 const RawBee2 = require('./raw-bee2')
 const { createStats, hrtimeMs } = require('./stats')
@@ -15,6 +16,7 @@ const LOG_INTERVAL = 1000
 async function main() {
   const store = new Corestore(storage)
   const service = new RawBee2(store)
+  goodbye(() => service.close())
   await service.ready()
 
   const stats = createStats()
