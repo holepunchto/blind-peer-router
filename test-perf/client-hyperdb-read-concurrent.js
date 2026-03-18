@@ -48,8 +48,8 @@ async function main() {
     if (done % 1000 === 0) {
       stats.report(`read ${done - 1000 + 1}-${done}`)
       stats.reset()
-      await new Promise(resolve => setImmediate(resolve)) // yield event loop
     }
+    await new Promise((resolve) => setImmediate(resolve)) // yield event loop
   }
 
   await service.close()

@@ -38,7 +38,9 @@ async function main() {
     if ((i + 1) % LOG_INTERVAL === 0) {
       stats.report(`write ${i + 1 - LOG_INTERVAL + 1}-${i + 1}`)
       stats.reset()
-      await new Promise(resolve => setImmediate(resolve)) // yield event loop
+    }
+    if (i % 100 === 0) {
+      await new Promise((resolve) => setImmediate(resolve)) // yield event loop
     }
   }
 
