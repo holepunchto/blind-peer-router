@@ -18,10 +18,9 @@ async function main() {
   const keys = []
 
   const store = new Corestore(storage)
-  const service = new RawHyperDB(store)
-  await service.ready()
-
   const stats = createStats()
+  const service = new RawHyperDB(store, { onflush: (ms) => stats.pushFlush(ms) })
+  await service.ready()
   const globalStart = process.hrtime()
 
   for (let i = 0; i < COUNT_RUNS; i += 1) {

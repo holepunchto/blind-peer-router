@@ -5,13 +5,14 @@ const ScopeLock = require('scope-lock')
 const IdEnc = require('hypercore-id-encoding')
 
 class RawHyperDB extends ReadyResource {
-  constructor(store) {
+  constructor(store, { onflush } = {}) {
     super()
 
     this.store = store
     this.db = HyperDB.bee2(this.store, spec)
     this._flushTimer = null
     this.lock = new ScopeLock({ debounce: true })
+    this.onflush = onflush || noop
 
     this._pendingBatch = new Map()
   }
@@ -58,12 +59,17 @@ class RawHyperDB extends ReadyResource {
     try {
       const batch = this._pendingBatch
       this._pendingBatch = new Map()
+      const start = process.hrtime()
       await this.db.insertAll(batch.values())
       await this.db.flush()
+      const diff = process.hrtime(start)
+      this.onflush(diff[0] * 1000 + diff[1] / 1e6, batch.size)
     } finally {
       this.lock.unlock()
     }
   }
 }
+
+function noop() {}
 
 module.exports = RawHyperDB
