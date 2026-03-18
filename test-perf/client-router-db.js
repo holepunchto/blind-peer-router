@@ -3,6 +3,8 @@ const ProtomuxRPCRouter = require('protomux-rpc-router')
 const Hyperswarm = require('hyperswarm')
 const Corestore = require('corestore')
 const b4a = require('b4a')
+const goodbye = require('graceful-goodbye')
+
 const BlindPeerRouter = require('..')
 
 const COUNT_RUNS = 100000
@@ -24,6 +26,11 @@ async function main() {
     { key: b4a.from('e'.repeat(64), 'hex') }
   ]
   const service = new BlindPeerRouter(store, swarm, protomuxRpcRouter, { blindPeers })
+  goodbye(async () => {
+    await service.close()
+    await swarm.destroy()
+    await store.close()
+  })
 
   console.time('main')
 
@@ -57,8 +64,9 @@ async function main() {
   for await (const _ of service.list()) nrEntries++
   console.log('total entries', nrEntries)
 
-  await swarm.destroy()
   await service.close()
+  await swarm.destroy()
+  await store.close()
 }
 
 main()
