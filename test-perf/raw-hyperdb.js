@@ -43,8 +43,6 @@ class RawHyperDB extends ReadyResource {
 
     const normKey = IdEnc.normalize(key)
     this._pendingBatch.set(normKey, ['@blind-peer-router/assignment', { key, peers }])
-
-    return false
   }
 
   async getAndInsert(key, peers) {
@@ -53,8 +51,6 @@ class RawHyperDB extends ReadyResource {
 
     const normKey = IdEnc.normalize(key)
     this._pendingBatch.set(normKey, ['@blind-peer-router/assignment', { key, peers }])
-
-    return false
   }
 
   async _flush() {
