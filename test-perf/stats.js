@@ -34,8 +34,8 @@ function printLine(prefix, latencies) {
   latencies.sort((a, b) => a - b)
   const len = latencies.length
   const sum = latencies.reduce((a, b) => a + b, 0)
-  const totalTime =  hrtimeMs(startTime)
-  const opsPerSec = 1000 * latencies.length / totalTime
+  const totalTime = hrtimeMs(startTime)
+  const opsPerSec = (1000 * latencies.length) / totalTime
 
   console.log(
     `${prefix}  n=${len}  avg=${(sum / len).toFixed(2)}ms  ` +
