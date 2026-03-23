@@ -3,13 +3,14 @@ const HyperDB = require('hyperdb')
 const { routerDefinition: spec } = require('blind-peer-encodings')
 const ScopeLock = require('scope-lock')
 const IdEnc = require('hypercore-id-encoding')
+const Hyperbee2 = require('hyperbee2')
 
 class RawHyperDB extends ReadyResource {
   constructor(store, { onflush } = {}) {
     super()
 
     this.store = store
-    this.db = HyperDB.bee2(this.store, spec)
+    this.db = HyperDB.bee2(new Hyperbee2(this.store), spec)
     this._flushTimer = null
     this.lock = new ScopeLock({ debounce: true })
     this.onflush = onflush || noop

@@ -1,6 +1,8 @@
+let startTime = process.hrtime()
+
 function createStats() {
-  const ops = []
-  const flushes = []
+  let ops = []
+  let flushes = []
 
   return {
     pushOp(ms) {
@@ -21,8 +23,9 @@ function createStats() {
     },
 
     reset() {
-      ops.length = 0
-      flushes.length = 0
+      ops = []
+      flushes = []
+      startTime = process.hrtime()
     }
   }
 }
@@ -31,6 +34,8 @@ function printLine(prefix, latencies) {
   latencies.sort((a, b) => a - b)
   const len = latencies.length
   const sum = latencies.reduce((a, b) => a + b, 0)
+  const totalTime =  hrtimeMs(startTime)
+  const opsPerSec = 1000 * latencies.length / totalTime
 
   console.log(
     `${prefix}  n=${len}  avg=${(sum / len).toFixed(2)}ms  ` +
@@ -38,7 +43,7 @@ function printLine(prefix, latencies) {
       `p95=${latencies[Math.floor(len * 0.95)].toFixed(2)}ms  ` +
       `p99=${latencies[Math.floor(len * 0.99)].toFixed(2)}ms  ` +
       `max=${latencies[len - 1].toFixed(2)}ms  ` +
-      `ops/s=${(len / (sum / 1000)).toFixed(0)}`
+      `ops/s=${opsPerSec}`
   )
 }
 
