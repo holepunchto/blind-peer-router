@@ -1,6 +1,6 @@
 {
   "name": "blind-peer-router",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Single-writer RPC service mapping content keys to blind peer assignments",
   "main": "index.js",
   "scripts": {
