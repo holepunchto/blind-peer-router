@@ -21,6 +21,14 @@
     "spec/",
     "lib/"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holepunchto/blind-peer-router.git"
+  },
+  "bugs": {
+    "url": "https://github.com/holepunchto/blind-peer-router/issues"
+  },
+  "homepage": "https://github.com/holepunchto/blind-peer-router",
   "keywords": [
     "blind-peer",
     "router",
